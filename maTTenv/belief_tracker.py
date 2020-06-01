@@ -5,7 +5,7 @@ UKFbelief : Belief Update using Unscented Kalman Filter using filterpy library
 """
 import numpy as np
 from numpy import linalg as LA
-import ttenv.util as util
+import maTTenv.utils as util
 
 from filterpy.kalman import JulierSigmaPoints, UnscentedKalmanFilter, ExtendedKalmanFilter
 
