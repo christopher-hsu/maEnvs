@@ -1,4 +1,4 @@
-from gym import wrappers
+from maTTenv.ma_time_limit import maTimeLimit
 
 def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
                     T_steps=None, num_agents=2, num_targets=1, **kwargs):
@@ -55,7 +55,8 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
     else:
         raise ValueError('No such environment exists.')
 
-    env = wrappers.TimeLimit(env0, max_episode_steps=T_steps)
+    env = maTimeLimit(env0, max_episode_steps=T_steps)
+
     if ros:
         from ttenv.ros_wrapper import Ros
         env = Ros(env)
