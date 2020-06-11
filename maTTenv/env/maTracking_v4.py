@@ -22,6 +22,7 @@ o_d : linear distance to the closet obstacle point
 o_alpha : angular distance to the closet obstacle point
 
 [Environment Description]
+Varying number of agents, set number of randomly moving targets
 
 maTargetTrackingEnv1 : Double Integrator Target model with KF belief tracker
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma)] * nb_targets, [o_d, o_alpha]
@@ -29,14 +30,14 @@ maTargetTrackingEnv1 : Double Integrator Target model with KF belief tracker
     Belief Target : KF, Double Integrator model
 """
 
-class maTrackingEnv4(maTrackingBase):
+class maTrackingEnv2(maTrackingBase):
 
     def __init__(self, num_agents=2, num_targets=2, map_name='empty', 
                         is_training=True, known_noise=True, **kwargs):
         super().__init__(num_agents=num_agents, num_targets=num_targets,
                         map_name=map_name, is_training=is_training)
 
-        self.id = 'maTracking-v4'
+        self.id = 'maTracking-v2'
         self.nb_agents = num_agents
         self.agent_dim = 3
         self.target_dim = 4

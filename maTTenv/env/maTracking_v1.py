@@ -22,6 +22,7 @@ o_d : linear distance to the closet obstacle point
 o_alpha : angular distance to the closet obstacle point
 
 [Environment Description]
+Set number of agents, set number of randomly moving targets
 
 maTargetTrackingEnv1 : Double Integrator Target model with KF belief tracker
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma)] * nb_targets, [o_d, o_alpha]
