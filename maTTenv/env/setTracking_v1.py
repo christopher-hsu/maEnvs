@@ -26,7 +26,7 @@ Varying number of agents, varying number of randomly moving targets
 No obstacles
 Greedy target assignment
 
-setTrackingEnv3 : Double Integrator Target model with KF belief tracker
+setTrackingEnv1 : Double Integrator Target model with KF belief tracker
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma), o_d, o_alpha] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
@@ -36,14 +36,14 @@ setTrackingEnv3 : Double Integrator Target model with KF belief tracker
 
 """
 
-class setTrackingEnv7(maTrackingBase):
+class setTrackingEnv1(maTrackingBase):
 
     def __init__(self, num_agents=1, num_targets=2, map_name='empty', 
                         is_training=True, known_noise=True, **kwargs):
         super().__init__(num_agents=num_agents, num_targets=num_targets,
                         map_name=map_name, is_training=is_training)
 
-        self.id = 'setTracking-v7'
+        self.id = 'setTracking-v1'
         self.nb_agents = num_agents #only for init, will change with reset()
         self.nb_targets = num_targets #only for init, will change with reset()
         self.agent_dim = 3
