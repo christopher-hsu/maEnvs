@@ -1,3 +1,15 @@
+# from gym.envs.registration import register
+
+# register(
+#     id='maTracking-v0',
+#     entry_point='maTTenv.env:maTrackingEnv0',
+# )
+# register(
+#     id='setTracking-v0',
+#     entry_point='maTTenv.env:setTrackingEnv0',
+# )
+
+
 from maTTenv.ma_time_limit import maTimeLimit
 
 def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
