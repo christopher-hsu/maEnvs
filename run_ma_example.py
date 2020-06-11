@@ -32,11 +32,11 @@ def main():
 
     obs = env.reset()
     # See below why this check is needed for training or eval loop
-    while(type(done) is dict):
+    while not done['__all__']:
         if args.render:
             env.render()
 
-        for agent_id, a_obs in obs.items():
+        for agent_id, o in obs.items():
             action_dict[agent_id] = env.action_space.sample()
 
         obs, rew, done, info = env.step(action_dict)
