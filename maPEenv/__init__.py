@@ -25,12 +25,12 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
         T_steps = 200
 
     if env_name == 'maTracking-v2':
-        from maPDenv.env.maTracking_v2 import maTrackingEnv2
+        from maPEenv.env.maTracking_v2 import maTrackingEnv2
         env0 = maTrackingEnv2(num_agents=num_agents, num_targets=num_targets, **kwargs)
 
-    elif env_name == 'setTracking-v0':
-        from maPDenv.env.setTracking_v0 import setTrackingEnv0
-        env0 = setTrackingEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
+    elif env_name == 'maPerimeterDefense-v0':
+        from maPEenv.env.maPerimeterDefense_v0 import maPerimeterDefenseEnv0
+        env0 = maPerimeterDefenseEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
     else:
         raise ValueError('No such environment exists.')
 
@@ -40,10 +40,10 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
         from ttenv.ros_wrapper import Ros
         env = Ros(env)
     if render:
-        from maPDenv.display_wrapper import Display2D
+        from maPEenv.display_wrapper import Display2D
         env = Display2D(env, figID=figID)
     if record:
-        from maPDenv.display_wrapper import Video2D
+        from maPEenv.display_wrapper import Video2D
         env = Video2D(env, dirname = directory)
 
     return env
