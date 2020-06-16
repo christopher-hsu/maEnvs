@@ -2,8 +2,8 @@ from collections import OrderedDict
 
 # from ray.rllib.env.constants import GROUP_REWARDS, GROUP_INFO
 # from ray.rllib.env.multi_agent_env import MultiAgentEnv
-from utils.rllib_modules.constants import GROUP_REWARDS, GROUP_INFO
-from utils.rllib_modules.multi_agent_env import MultiAgentEnv
+from utilities.rllib_modules.constants import GROUP_REWARDS, GROUP_INFO
+from utilities.rllib_modules.multi_agent_env import MultiAgentEnv
 
 
 # TODO(ekl) we should add some unit tests for this

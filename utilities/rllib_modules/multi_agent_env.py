@@ -1,5 +1,5 @@
 # from ray.rllib.utils.annotations import PublicAPI
-from utils.rllib_modules.annotations import PublicAPI
+from utilities.rllib_modules.annotations import PublicAPI
 
 
 @PublicAPI
