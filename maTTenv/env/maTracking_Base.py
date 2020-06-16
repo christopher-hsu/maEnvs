@@ -5,10 +5,10 @@ import gym
 from gym import spaces, logger
 from gym.utils import seeding
 from maTTenv.maps import map_utils
-import maTTenv.utils as util 
+import maTTenv.util as util 
 from maTTenv.metadata import METADATA
 # rllib style env
-# from utils.rllib_modules.multi_agent_env import MultiAgentEnv
+# from utilities.rllib_modules.multi_agent_env import MultiAgentEnv
 
 
 class maTrackingBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are not supported

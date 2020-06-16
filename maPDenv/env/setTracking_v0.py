@@ -3,7 +3,7 @@ import numpy as np
 from numpy import linalg as LA
 from gym import spaces, logger
 from maPDenv.maps import map_utils
-import maPDenv.utils as util 
+import maPDenv.util as util 
 from maPDenv.agent_models import *
 from maPDenv.belief_tracker import KFbelief
 from maPDenv.metadata import METADATA
