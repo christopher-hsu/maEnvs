@@ -10,7 +10,7 @@
 # )
 
 
-from maTTenv.ma_time_limit import maTimeLimit
+from utils.ma_time_limit import maTimeLimit
 
 def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
                     T_steps=None, num_agents=2, num_targets=1, **kwargs):
