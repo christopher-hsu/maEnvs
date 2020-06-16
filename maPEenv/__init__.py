@@ -28,9 +28,9 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
         from maPEenv.env.maTracking_v2 import maTrackingEnv2
         env0 = maTrackingEnv2(num_agents=num_agents, num_targets=num_targets, **kwargs)
 
-    elif env_name == 'maPerimeterDefense-v0':
-        from maPEenv.env.maPerimeterDefense_v0 import maPerimeterDefenseEnv0
-        env0 = maPerimeterDefenseEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
+    elif env_name == 'maPDefense-v0':
+        from maPEenv.env.maPDefense_v0 import maPDefenseEnv0
+        env0 = maPDefenseEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
     else:
         raise ValueError('No such environment exists.')
 

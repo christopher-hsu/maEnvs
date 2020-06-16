@@ -35,14 +35,14 @@ setTrackingEnv0 : Double Integrator Target model with KF belief tracker
 
 """
 
-class maPerimeterDefenseEnv0(maTrackingBase):
+class maPDefenseEnv0(maTrackingBase):
 
     def __init__(self, num_agents=1, num_targets=2, map_name='empty', 
                         is_training=True, known_noise=True, **kwargs):
         super().__init__(num_agents=num_agents, num_targets=num_targets,
                         map_name=map_name, is_training=is_training)
 
-        self.id = 'maPerimeterDefense-v0'
+        self.id = 'maPDefense-v0'
         self.nb_agents = num_agents #only for init, will change with reset()
         self.nb_targets = num_targets #only for init, will change with reset()
         self.agent_dim = 3
