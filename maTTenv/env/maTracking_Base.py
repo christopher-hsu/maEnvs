@@ -8,7 +8,7 @@ from maTTenv.maps import map_utils
 import maTTenv.utils as util 
 from maTTenv.metadata import METADATA
 # rllib style env
-# from maTTenv.rllib_modules.multi_agent_env import MultiAgentEnv
+# from utils.rllib_modules.multi_agent_env import MultiAgentEnv
 
 
 class maTrackingBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are not supported
