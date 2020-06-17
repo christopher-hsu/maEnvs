@@ -1,9 +1,9 @@
-import maTTenv
+import maPEenv
 import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--env', help='environment ID', type=str, default='maTracking-v1')
+parser.add_argument('--env', help='environment ID', type=str, default='maPDefense-v0')
 parser.add_argument('--render', help='whether to render', type=int, default=0)
 parser.add_argument('--record', help='whether to record', type=int, default=0)
 parser.add_argument('--ros', help='whether to use ROS', type=int, default=0)
@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 # @profile
 def main():
-    env = maTTenv.make(args.env,
+    env = maPEenv.make(args.env,
                     render=args.render,
                     record=args.record,
                     ros=args.ros,
