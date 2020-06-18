@@ -23,7 +23,7 @@ o_alpha : angular distance to the closet obstacle point
 [Environment Description]
 
 maTrackingEnv0 : Static Target model + noise - No Velocity Estimate
-    obs_dict: [d, alpha, logdet(Sigma)] * nb_targets , [o_d, o_alpha]
+    obs_dict: [d, alpha, logdet(Sigma), observed] * nb_targets , [o_d, o_alpha]
     Agent: SE2 [x,y,orientation]
     Target: Static [x,y] + noise
     Belief Target: KF, Estimate only x and y

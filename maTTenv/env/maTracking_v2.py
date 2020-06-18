@@ -25,7 +25,7 @@ o_alpha : angular distance to the closet obstacle point
 Varying number of agents, set number of randomly moving targets
 
 maTargetTrackingEnv2 : Double Integrator Target model with KF belief tracker
-    obs state: [d, alpha, ddot, alphadot, logdet(Sigma)] * nb_targets, [o_d, o_alpha]
+    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed] * nb_targets, [o_d, o_alpha]
     Target : Double Integrator model, [x,y,xdot,ydot]
     Belief Target : KF, Double Integrator model
 """

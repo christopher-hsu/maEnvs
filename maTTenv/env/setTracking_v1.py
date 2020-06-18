@@ -27,7 +27,7 @@ No obstacles
 Greedy target assignment
 
 setTrackingEnv1 : Double Integrator Target model with KF belief tracker
-    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), o_d, o_alpha] *nb_targets
+    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
             num_agents describes the upperbound on possible number of agents in env
