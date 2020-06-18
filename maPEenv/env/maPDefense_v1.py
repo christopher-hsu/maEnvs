@@ -27,7 +27,7 @@ Varying number of agents, varying number of randomly moving targets
 No obstacles
 
 maPDefenseEnv0 : SE2 Target model with UKF belief tracker
-    obs state: [d, alpha, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
+    obs state: [d, alpha, logdet(Sigma), o_d, o_alpha] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
             num_agents describes the upperbound on possible number of agents in env
@@ -47,23 +47,28 @@ class maPDefenseEnv0(maTrackingBase):
         self.nb_agents = num_agents #only for init, will change with reset()
         self.nb_targets = num_targets #only for init, will change with reset()
         self.agent_dim = 3
-        self.target_dim = 3
+        self.target_dim = 3 #dim=4 if double int
         self.target_init_vel = METADATA['target_init_vel']*np.ones((2,))
         # LIMIT
         self.limit = {} # 0: low, 1:highs
         self.limit['agent'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
         self.limit['target'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
         rel_vel_limit = METADATA['target_vel_limit'] + METADATA['action_v'][0] # Maximum relative speed
-        self.limit['state'] = np.array([[0.0, -np.pi, -50.0, 0.0, 0.0, -np.pi ],
-                                        [600.0, np.pi, 50.0, 2.0, self.sensor_r, np.pi]])
+        self.limit['state'] = [np.concatenate(([0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0], [0.0, -np.pi ])),
+                               np.concatenate(([600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0], [self.sensor_r, np.pi]))]
         self.observation_space = spaces.Box(self.limit['state'][0], self.limit['state'][1], dtype=np.float32)
+        # self.targetA = np.concatenate((np.concatenate((np.eye(2), self.sampling_period*np.eye(2)), axis=1), 
+        #                                 [[0,0,1,0],[0,0,0,1]]))
+        # self.target_noise_cov = METADATA['const_q'] * np.concatenate((
+        #                 np.concatenate((self.sampling_period**3/3*np.eye(2), self.sampling_period**2/2*np.eye(2)), axis=1),
+        #                 np.concatenate((self.sampling_period**2/2*np.eye(2), self.sampling_period*np.eye(2)),axis=1) ))
         self.target_noise_cov = METADATA['const_q'] * self.sampling_period * np.eye(self.target_dim)
-
         if known_noise:
             self.target_true_noise_sd = self.target_noise_cov
         else:
-            self.target_true_noise_sd = METADATA['const_q_true'] * \
-                                self.sampling_period * np.eye(self.target_dim)
+            self.target_true_noise_sd = METADATA['const_q_true'] * np.concatenate((
+                        np.concatenate((self.sampling_period**2/2*np.eye(2), self.sampling_period/2*np.eye(2)), axis=1),
+                        np.concatenate((self.sampling_period/2*np.eye(2), self.sampling_period*np.eye(2)),axis=1) ))
 
         # Build a robot 
         self.setup_agents()
@@ -81,6 +86,13 @@ class maPDefenseEnv0(maTrackingBase):
                         for i in range(self.num_agents)]
 
     def setup_targets(self):
+        # self.targets = [AgentDoubleInt2D(agent_id = 'target-' + str(i),
+        #                 dim=self.target_dim, sampling_period=self.sampling_period, 
+        #                 limit=self.limit['target'],
+        #                 collision_func=lambda x: map_utils.is_collision(self.MAP, x),
+        #                 A=self.targetA, W=self.target_true_noise_sd) 
+        #                 for i in range(self.num_targets)]
+
         self.targets = [AgentSE2(agent_id = 'target-' + str(i),
                         dim=self.target_dim, sampling_period=self.sampling_period, 
                         limit=self.limit['target'],
@@ -129,9 +141,13 @@ class maPDefenseEnv0(maTrackingBase):
                 obs_dict[self.agents[ii].agent_id] = []
         # Initialize all targets and beliefs
         for nn in range(self.num_targets):
+            # self.belief_targets[nn].reset(
+            #             init_state=np.concatenate((init_pose['belief_targets'][nn][:2], np.zeros(2))),
+            #             init_cov=self.target_init_cov)
             self.belief_targets[nn].reset(
                         init_state=init_pose['belief_targets'][nn],
                         init_cov=self.target_init_cov)
+            # self.targets[nn].reset(np.concatenate((init_pose['targets'][nn][:2], self.target_init_vel)))
             self.targets[nn].reset(init_pose['targets'][nn])
         # For nb agents calculate belief of targets assigned
         for jj in range(self.nb_targets):
@@ -140,8 +156,8 @@ class maPDefenseEnv0(maTrackingBase):
                                             xy_base=self.agents[kk].state[:2], 
                                             theta_base=self.agents[kk].state[2])
                 logdetcov = np.log(LA.det(self.belief_targets[jj].cov))
-                obs_dict[self.agents[kk].agent_id].append([r, alpha, logdetcov, 0.0, 
-                                                            self.sensor_r, np.pi])
+                obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 
+                                                           0.0, self.sensor_r, np.pi])
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
         return obs_dict
@@ -193,6 +209,12 @@ class maPDefenseEnv0(maTrackingBase):
                 r_b, alpha_b = util.relative_distance_polar(self.belief_targets[kk].state[:2],
                                         xy_base=self.agents[ii].state[:2], 
                                         theta_base=self.agents[ii].state[-1])
+                # r_dot_b, alpha_dot_b = util.relative_velocity_polar(
+                #                         self.belief_targets[kk].state[:2],
+                #                         self.belief_targets[kk].state[2:],
+                #                         self.agents[ii].state[:2], self.agents[ii].state[-1],
+                #                         action_vw[0], action_vw[1])
+                # obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                 obs_dict[agent_id].append([r_b, alpha_b,
                                         np.log(LA.det(self.belief_targets[kk].cov)), 
                                         float(observed[kk]), obstacles_pt[0], obstacles_pt[1]])

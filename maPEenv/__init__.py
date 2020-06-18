@@ -24,13 +24,13 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
     if T_steps is None:
         T_steps = 200
 
-    if env_name == 'maTracking-v2':
-        from maPEenv.env.maTracking_v2 import maTrackingEnv2
-        env0 = maTrackingEnv2(num_agents=num_agents, num_targets=num_targets, **kwargs)
-
-    elif env_name == 'maPDefense-v0':
+    if env_name == 'maPDefense-v0':
         from maPEenv.env.maPDefense_v0 import maPDefenseEnv0
         env0 = maPDefenseEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
+
+    elif env_name == 'maPDefense-v1':
+        from maPEenv.env.maPDefense_v1 import maPDefenseEnv1
+        env0 = maPDefenseEnv1(num_agents=num_agents, num_targets=num_targets, **kwargs)
     else:
         raise ValueError('No such environment exists.')
 
