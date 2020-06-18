@@ -90,7 +90,7 @@ class UKFbelief(object):
     """
     Unscented Kalman Filter from filterpy
     """
-    def __init__(self, dim, limit, dim_z=2, fx=None, W=None, obs_noise_func=None,
+    def __init__(self, agent_id, dim, limit, dim_z=2, fx=None, W=None, obs_noise_func=None,
                     collision_func=None, sampling_period=0.5, kappa=1):
         """
         dim : dimension of state
@@ -104,11 +104,13 @@ class UKFbelief(object):
         collision_func : collision checking function
         n : the number of sigma points
         """
+        self.agent_id = agent_id
         self.dim = dim
         self.limit = limit
         self.W = W if W is not None else np.zeros((self.dim, self.dim))
         self.obs_noise_func = obs_noise_func
         self.collision_func = collision_func
+        self.cov = np.eye(self.dim)
 
         def hx(y, agent_state, measure_func=util.relative_distance_polar):
             r_pred, alpha_pred = measure_func(y[:2], agent_state[:2],
