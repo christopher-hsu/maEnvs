@@ -164,7 +164,6 @@ class setTrackingEnv0(maTrackingBase):
                 if agent_id != ids:
                     margin_pos.append(np.array(self.agents[p].state[:2]))
             _ = self.agents[ii].update(action_vw, margin_pos)
-            # _ = self.agents[ii].update(action_vw, [t.state[:2] for t in self.targets[:self.nb_targets]])
             
             observed = []
             # Update beliefs of all targets
