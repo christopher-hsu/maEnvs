@@ -74,6 +74,7 @@ class AgentSE2(Agent):
 
     def reset(self, init_state):
         super().reset(init_state)
+        self.vw = [0.0, 0.0]
         if self.policy:
             self.policy.reset(init_state)
 
@@ -85,13 +86,17 @@ class AgentSE2(Agent):
         if control_input is None:
             control_input = self.policy.get_control(self.state)
 
-        new_state = SE2Dynamics(self.state, self.sampling_period, control_input) 
+        if self.dim == 3:
+            new_state = SE2Dynamics(self.state, self.sampling_period, control_input)
+        elif self.dim == 5:
+            new_state = SE2DynamicsVel(self.state, self.sampling_period, control_input)
+
         is_col = 0 
         if self.collision_check(new_state[:2]):
             is_col = 1
             new_state[:2] = self.state[:2]
+            control_input = self.vw
             if self.policy is not None:
-                # self.policy.collision(new_state)
                 corrected_policy = self.policy.collision(new_state)
                 if corrected_policy is not None:
                     new_state = SE2DynamicsVel(self.state,
@@ -102,6 +107,7 @@ class AgentSE2(Agent):
                 new_state[:2] = self.state[:2]
        
         self.state = new_state
+        self.vw = control_input
         self.range_check()        
 
         return is_col
