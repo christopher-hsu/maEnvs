@@ -4,9 +4,9 @@ from numpy import linalg as LA
 import gym
 from gym import spaces, logger
 from gym.utils import seeding
-from maPEenv.maps import map_utils
-import maPEenv.util as util 
-from maPEenv.metadata import METADATA
+from maPDenv.maps import map_utils
+import maPDenv.util as util 
+from maPDenv.metadata import METADATA
 # rllib style env
 # from utilities.rllib_modules.multi_agent_env import MultiAgentEnv
 

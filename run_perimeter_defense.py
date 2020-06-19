@@ -1,4 +1,4 @@
-import maPEenv
+import maPDenv
 import numpy as np
 import argparse
 
@@ -16,7 +16,7 @@ args = parser.parse_args()
 
 # @profile
 def main():
-    env = maPEenv.make(args.env,
+    env = maPDenv.make(args.env,
                     render=args.render,
                     record=args.record,
                     ros=args.ros,

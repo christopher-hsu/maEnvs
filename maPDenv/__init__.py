@@ -25,11 +25,11 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
         T_steps = 200
 
     if env_name == 'maPDefense-v0':
-        from maPEenv.env.maPDefense_v0 import maPDefenseEnv0
+        from maPDenv.env.maPDefense_v0 import maPDefenseEnv0
         env0 = maPDefenseEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
 
     elif env_name == 'maPDefense-v1':
-        from maPEenv.env.maPDefense_v1 import maPDefenseEnv1
+        from maPDenv.env.maPDefense_v1 import maPDefenseEnv1
         env0 = maPDefenseEnv1(num_agents=num_agents, num_targets=num_targets, **kwargs)
     else:
         raise ValueError('No such environment exists.')
@@ -40,10 +40,10 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
         from ttenv.ros_wrapper import Ros
         env = Ros(env)
     if render:
-        from maPEenv.display_wrapper import Display2D
+        from maPDenv.display_wrapper import Display2D
         env = Display2D(env, figID=figID)
     if record:
-        from maPEenv.display_wrapper import Video2D
+        from maPDenv.display_wrapper import Video2D
         env = Video2D(env, dirname = directory)
 
     return env

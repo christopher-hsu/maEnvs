@@ -2,16 +2,16 @@ import os, copy, pdb
 import numpy as np
 from numpy import linalg as LA
 from gym import spaces, logger
-from maPEenv.maps import map_utils
-import maPEenv.util as util 
-from maPEenv.agent_models import *
-from maPEenv.belief_tracker import * #KFbelief
-from maPEenv.metadata import METADATA
-from maPEenv.policies import *
-from maPEenv.env.maTracking_Base import maTrackingBase
+from maPDenv.maps import map_utils
+import maPDenv.util as util 
+from maPDenv.agent_models import *
+from maPDenv.belief_tracker import * #KFbelief
+from maPDenv.metadata import METADATA
+from maPDenv.policies import *
+from maPDenv.env.maTracking_Base import maTrackingBase
 
 """
-Pursuit Evasion Environments for Reinforcement Learning.
+Perimeter Defense Environments for Reinforcement Learning.
 [Variables]
 
 d: radial coordinate of a belief target in the learner frame
