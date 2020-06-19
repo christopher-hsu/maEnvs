@@ -115,14 +115,14 @@ class maPDefenseEnv0(maPDefenseBase):
             self.nb_targets = np.random.random_integers(1, self.num_targets)
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
-        # Initialize all agents
+        # Initialize agents
         for ii in range(self.nb_agents):
             self.agents[ii].reset(init_pose['agents'][ii])
             obs_dict[self.agents[ii].agent_id] = []
             # Only for nb agents in this episode
             # if ii < self.nb_agents:
 
-        # Initialize all targets and beliefs
+        # Initialize targets and beliefs
         for nn in range(self.nb_targets):
             self.belief_targets[nn].reset(
                         init_state=init_pose['belief_targets'][nn],
@@ -158,7 +158,7 @@ class maPDefenseEnv0(maPDefenseBase):
 
             action_vw = self.action_map[action_dict[agent_id]]
 
-            # Locations of all targets and agents in order to maintain a margin between them
+            # Locations of targets and agents in order to maintain a margin between them
             margin_pos = [t.state[:2] for t in self.targets[:self.nb_targets]]
             for p, ids in enumerate(action_dict):
                 if agent_id != ids:
@@ -166,7 +166,7 @@ class maPDefenseEnv0(maPDefenseBase):
             _ = self.agents[ii].update(action_vw, margin_pos)
             
             observed = []
-            # Update beliefs of all targets
+            # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])

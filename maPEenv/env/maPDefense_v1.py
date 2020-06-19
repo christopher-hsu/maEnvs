@@ -124,14 +124,13 @@ class maPDefenseEnv1(maTrackingBase):
             self.nb_targets = np.random.random_integers(1, self.num_targets)
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
-        # Initialize all agents
-        for ii in range(self.num_agents):
+        # Initialize agents
+        for ii in range(self.nb_agents):
             self.agents[ii].reset(init_pose['agents'][ii])
-            # Only for nb agents in this episode
-            if ii < self.nb_agents:
-                obs_dict[self.agents[ii].agent_id] = []
-        # Initialize all targets and beliefs
-        for nn in range(self.num_targets):
+            obs_dict[self.agents[ii].agent_id] = []
+
+        # Initialize targets and beliefs
+        for nn in range(self.nb_targets):
             self.belief_targets[nn].reset(
                         init_state=np.concatenate((init_pose['belief_targets'][nn], np.zeros(2))),
                         init_cov=self.target_init_cov)
@@ -168,7 +167,7 @@ class maPDefenseEnv1(maTrackingBase):
 
             action_vw = self.action_map[action_dict[agent_id]]
 
-            # Locations of all targets and agents in order to maintain a margin between them
+            # Locations of targets and agents in order to maintain a margin between them
             margin_pos = [t.state[:2] for t in self.targets[:self.nb_targets]]
             for p, ids in enumerate(action_dict):
                 if agent_id != ids:
@@ -176,8 +175,8 @@ class maPDefenseEnv1(maTrackingBase):
             _ = self.agents[ii].update(action_vw, margin_pos)
             
             observed = []
-            # Update beliefs of all targets using UKF
-            for jj in range(self.num_targets):
+            # Update beliefs of targets using UKF
+            for jj in range(self.nb_targets):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])
                 observed.append(obs[0])
