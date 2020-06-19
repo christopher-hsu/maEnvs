@@ -43,23 +43,10 @@ class maTrackingBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
             map_path=os.path.join(map_dir_path, map_name), 
             r_max = self.sensor_r, fov = self.fov/180.0*np.pi,
             margin2wall = METADATA['margin2wall'])
-        # LIMITS
-        self.limit = {} # 0: low, 1:high
-        self.limit['agent'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
-        self.limit['target'] = [self.MAP.mapmin, self.MAP.mapmax]
-        self.limit['state'] = [np.concatenate(([0.0, -np.pi, -50.0, 0.0]*self.num_targets, [0.0, -np.pi ])),
-                               np.concatenate(([600.0, np.pi, 50.0, 2.0]*self.num_targets, [self.sensor_r, np.pi]))]
-        self.observation_space = spaces.Box(self.limit['state'][0], self.limit['state'][1], dtype=np.float32)
 
         self.agent_init_pos =  np.array([self.MAP.origin[0], self.MAP.origin[1], 0.0])
         self.target_init_pos = np.array(self.MAP.origin)
         self.target_init_cov = METADATA['target_init_cov']
-        self.target_noise_cov = METADATA['const_q'] * self.sampling_period**3/3*np.eye(self.target_dim)
-        if known_noise:
-            self.target_true_noise_sd = self.target_noise_cov
-        else:
-            self.target_true_noise_sd = METADATA['const_q_true']*np.eye(2)
-        self.targetA=np.eye(self.target_dim)
 
         self.reset_num = 0
         #needed for gym/core.py wrappers
