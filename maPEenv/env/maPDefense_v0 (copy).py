@@ -8,7 +8,7 @@ from maPEenv.agent_models import *
 from maPEenv.belief_tracker import * #KFbelief
 from maPEenv.metadata import METADATA
 from maPEenv.policies import *
-from maPEenv.env.maPDefense_Base import maPDefenseBase
+from maPEenv.env.maTracking_Base import maTrackingBase
 
 """
 Pursuit Evasion Environments for Reinforcement Learning.
@@ -36,7 +36,7 @@ maPDefenseEnv0 : SE2 Target model with UKF belief tracker
 
 """
 
-class maPDefenseEnv0(maPDefenseBase):
+class maPDefenseEnv0(maTrackingBase):
 
     def __init__(self, num_agents=1, num_targets=2, map_name='empty', 
                         is_training=True, known_noise=True, **kwargs):
@@ -48,7 +48,7 @@ class maPDefenseEnv0(maPDefenseBase):
         self.nb_targets = num_targets #only for init, will change with reset()
         self.agent_dim = 3
         self.target_dim = 3
-        self.target_init_vel = np.array(METADATA['target_init_vel'])
+        self.target_init_vel = METADATA['target_init_vel']*np.ones((2,))
         # LIMIT
         self.limit = {} # 0: low, 1:highs
         self.limit['agent'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
@@ -89,6 +89,12 @@ class maPDefenseEnv0(maPDefenseBase):
                         for i in range(self.num_targets)]
 
     def setup_belief_targets(self):
+        # self.belief_targets = [KFbelief(agent_id = 'target-' + str(i),
+        #                 dim=self.target_dim, limit=self.limit['target'],# A=self.targetA,
+        #                 W=self.target_noise_cov, 
+        #                 obs_noise_func=self.observation_noise, 
+        #                 collision_func=lambda x: map_utils.is_collision(self.MAP, x))
+        #                 for i in range(self.num_targets)]
         self.belief_targets = [UKFbelief(agent_id = 'target-' + str(i),
                         dim=self.target_dim, limit=self.limit['target'], 
                         fx=SE2Dynamics,
@@ -170,6 +176,9 @@ class maPDefenseEnv0(maPDefenseBase):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])
                 observed.append(obs[0])
+                # self.belief_targets[jj].predict() # Belief state at t+1
+                # if obs[0]: # if observed, update the target belief.
+                #     self.belief_targets[jj].update(obs[1], self.agents[ii].state)
                 self.belief_targets[jj].update(obs[0], obs[1], self.agents[ii].state,
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
