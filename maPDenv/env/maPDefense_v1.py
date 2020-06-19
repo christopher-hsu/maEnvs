@@ -26,7 +26,7 @@ o_alpha : angular distance to the closet obstacle point
 Varying number of agents, varying number of randomly moving targets
 No obstacles
 
-maPDefenseEnv0 : SE2 Target model with UKF belief tracker
+maPDefenseEnv1 : SE2 Target model with UKF belief tracker
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
