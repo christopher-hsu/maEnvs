@@ -115,17 +115,15 @@ class setTrackingEnv1(maTrackingBase):
         except:
             self.nb_agents = np.random.random_integers(1, self.num_agents)
             self.nb_targets = np.random.random_integers(1, self.num_targets)
-            # self.nb_targets=1
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
-        # Initialize all agents
-        for ii in range(self.num_agents):
+        # Initialize agents
+        for ii in range(self.nb_agents):
             self.agents[ii].reset(init_pose['agents'][ii])
-            # Only for nb agents in this episode
-            if ii < self.nb_agents:
-                obs_dict[self.agents[ii].agent_id] = []
-        # Initialize all targets and beliefs
-        for nn in range(self.num_targets):
+            obs_dict[self.agents[ii].agent_id] = []
+
+        # Initialize targets and beliefs
+        for nn in range(self.nb_targets):
             self.belief_targets[nn].reset(
                         init_state=np.concatenate((init_pose['belief_targets'][nn][:2], np.zeros(2))),
                         init_cov=self.target_init_cov)
@@ -179,8 +177,8 @@ class setTrackingEnv1(maTrackingBase):
             _ = self.agents[ii].update(action_vw, margin_pos)
             
             observed = []
-            # Update beliefs of all targets
-            for jj in range(self.num_targets):
+            # Update beliefs of targets
+            for jj in range(self.nb_targets):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])
                 observed.append(obs[0])

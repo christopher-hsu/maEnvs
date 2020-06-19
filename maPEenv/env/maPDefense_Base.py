@@ -164,7 +164,7 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
         init_pose = {}
 
         init_pose['agents'] = []
-        for ii in range(self.num_agents):
+        for ii in range(self.nb_agents):
             is_agent_valid = False
             while(not is_agent_valid):
                 is_agent_valid, init_pose_agent = self.gen_rand_pose(
@@ -177,10 +177,9 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
             init_pose['agents'].append(init_pose_agent)
 
         init_pose['targets'], init_pose['belief_targets'] = [], []
-        for jj in range(self.num_targets):
+        for jj in range(self.nb_targets):
             is_target_valid = False
             while(not is_target_valid):
-                rand_agent = np.random.randint(self.num_agents)
                 is_target_valid, init_pose_target = self.gen_rand_pose(
                     self.origin_init_pos[:2], self.origin_init_pos[2],
                     lin_dist_range_target[0], lin_dist_range_target[1],
