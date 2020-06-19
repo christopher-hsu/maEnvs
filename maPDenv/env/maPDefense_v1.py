@@ -8,7 +8,7 @@ from maPDenv.agent_models import *
 from maPDenv.belief_tracker import *
 from maPDenv.metadata import METADATA
 from maPDenv.policies import *
-from maPDenv.env.maTracking_Base import maTrackingBase
+from maPDenv.env.maPDefense_Base import maPDefenseBase
 
 """
 Perimeter Defense Environments for Reinforcement Learning.
@@ -36,7 +36,7 @@ maPDefenseEnv0 : SE2 Target model with UKF belief tracker
 
 """
 
-class maPDefenseEnv1(maTrackingBase):
+class maPDefenseEnv1(maPDefenseBase):
 
     def __init__(self, num_agents=1, num_targets=2, map_name='empty', 
                         is_training=True, known_noise=True, **kwargs):
@@ -53,8 +53,8 @@ class maPDefenseEnv1(maTrackingBase):
         self.limit = {} # 0: low, 1:highs
         self.limit['agent'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
         self.limit['target'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
-        self.limit['target'] = [np.concatenate((self.MAP.mapmin, [-np.pi, -METADATA['target_init_vel'], -np.pi])),
-                                np.concatenate((self.MAP.mapmax, [np.pi, METADATA['target_init_vel'], np.pi]))]
+        self.limit['target'] = [np.concatenate((self.MAP.mapmin, [-np.pi, -METADATA['target_vel_limit'], -np.pi])),
+                                np.concatenate((self.MAP.mapmax, [np.pi, METADATA['target_vel_limit'], np.pi]))]
         rel_vel_limit = METADATA['target_vel_limit'] + METADATA['action_v'][0] # Maximum relative speed
         self.limit['state'] = np.array([[0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0, 0.0, -np.pi ],
                                         [600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0, self.sensor_r, np.pi]])
