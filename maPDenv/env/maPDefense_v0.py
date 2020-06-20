@@ -71,7 +71,7 @@ class maPDefenseEnv0(maPDefenseBase):
         self.setup_targets()
         self.setup_belief_targets()
         # Use custom reward
-        self.get_reward()
+        # self.get_reward()
 
     def setup_agents(self):
         self.agents = [AgentSE2(agent_id = 'agent-' + str(i), 
@@ -100,7 +100,29 @@ class maPDefenseEnv0(maPDefenseBase):
 
 
     def get_reward(self, obstacles_pt=None, observed=None, is_training=True):
-        return reward_fun(self.nb_targets, self.belief_targets, is_training)
+        return self.reward_fun(observed, self.origin_init_pos, 
+                            METADATA['perimeter_radius'], is_training)
+
+    def reward_fun(self, observed, goal_origin, goal_radius, 
+                    is_training=True, c_mean=0.1):
+        """ Return a reward for targets that enter the goal radius or observed
+        +1 for observed, -1 for entering goal radius
+        """
+        intruder = observed.astype(float)
+        target_states = [target.state for target in self.targets[:self.nb_targets]]
+        global_states = util.global_relative_measure(target_states, goal_origin)
+        intruder[global_states[:,0] < goal_radius] = -1
+
+        reward = np.sum(intruder)
+        done = False
+        mean_nlogdetcov = 0.0
+
+        #if captured or entered goal reset target pose
+        for ii, rew in enumerate(intruder):
+            if rew != 0:
+                self.reset_target_pose(target_id=ii)
+
+        return reward, done, mean_nlogdetcov
 
     def reset(self,**kwargs):
         """
@@ -164,12 +186,12 @@ class maPDefenseEnv0(maPDefenseBase):
                     margin_pos.append(np.array(self.agents[p].state[:2]))
             _ = self.agents[ii].update(action_vw, margin_pos)
             
-            observed = []
+            observed = np.zeros(self.nb_targets, dtype=bool)
             # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])
-                observed.append(obs[0])
+                observed[jj] = obs[0]
                 self.belief_targets[jj].update(obs[0], obs[1], self.agents[ii].state,
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
@@ -192,13 +214,32 @@ class maPDefenseEnv0(maPDefenseBase):
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
         return obs_dict, reward_dict, done_dict, info_dict
 
-def reward_fun(nb_targets, belief_targets, is_training=True, c_mean=0.1):
-    detcov = [LA.det(b_target.cov) for b_target in belief_targets[:nb_targets]]
-    r_detcov_mean = - np.mean(np.log(detcov))# - np.std(np.log(detcov))
-    reward = c_mean * r_detcov_mean
+    def reset_target_pose(self, target_id,
+                lin_dist_range_target=(METADATA['target_init_dist_min'], METADATA['target_init_dist_max']),
+                ang_dist_range_target=(-np.pi, np.pi),
+                lin_dist_range_belief=(METADATA['init_belief_distance_min'], METADATA['init_belief_distance_max']),
+                ang_dist_range_belief=(-np.pi, np.pi),
+                blocked=False):
+        """if captured or entered goal reset target pose and belief
+        """
+        is_target_valid = False
+        while(not is_target_valid):
+            is_target_valid, init_pose_target = self.gen_rand_pose(
+                self.origin_init_pos[:2], self.origin_init_pos[2],
+                lin_dist_range_target[0], lin_dist_range_target[1],
+                ang_dist_range_target[0], ang_dist_range_target[1])
+            is_blocked = map_utils.is_blocked(self.MAP, self.origin_init_pos[:2], init_pose_target[:2])
+            if is_target_valid:
+                is_target_valid = (blocked == is_blocked)
 
-    mean_nlogdetcov = None
-    if not(is_training):
-        logdetcov = [np.log(LA.det(b_target.cov)) for b_target in belief_targets[:nb_targets]]
-        mean_nlogdetcov = -np.mean(logdetcov)
-    return reward, False, mean_nlogdetcov
+        is_belief_valid, init_pose_belief = False, np.zeros((2,))
+        while((not is_belief_valid) and is_target_valid):
+            is_belief_valid, init_pose_belief = self.gen_rand_pose(
+                init_pose_target[:2], init_pose_target[2],
+                lin_dist_range_belief[0], lin_dist_range_belief[1],
+                ang_dist_range_belief[0], ang_dist_range_belief[1])
+
+        self.belief_targets[target_id].reset(
+                    init_state=init_pose_belief,
+                    init_cov=self.target_init_cov)
+        self.targets[target_id].reset(init_pose_target)
