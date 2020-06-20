@@ -85,7 +85,8 @@ class maPDefenseEnv0(maPDefenseBase):
                         dim=self.target_dim, sampling_period=self.sampling_period, 
                         limit=self.limit['target'],
                         collision_func=lambda x: map_utils.is_collision(self.MAP, x),
-                        policy=SinePolicy(0.1, 0.5, 5.0, self.sampling_period))
+                        policy=SpiralPolicy(self.sampling_period, self.MAP.origin, 
+                                            METADATA['spiral_min'], METADATA['spiral_max']))
                         for i in range(self.num_targets)]
 
     def setup_belief_targets(self):
@@ -119,8 +120,6 @@ class maPDefenseEnv0(maPDefenseBase):
         for ii in range(self.nb_agents):
             self.agents[ii].reset(init_pose['agents'][ii])
             obs_dict[self.agents[ii].agent_id] = []
-            # Only for nb agents in this episode
-            # if ii < self.nb_agents:
 
         # Initialize targets and beliefs
         for nn in range(self.nb_targets):

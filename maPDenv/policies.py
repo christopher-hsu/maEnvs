@@ -3,6 +3,8 @@ import numpy as np
 import maPDenv.util as util
 
 class RandomPolicy():
+    """ Target policy that returns random control inputs
+    """
     def __init__(self, lim_vel=2.0):
         self.limit = np.array([[-lim_vel, -np.pi], [lim_vel, np.pi]])
 
@@ -12,7 +14,43 @@ class RandomPolicy():
     def collision(self):
         pass
 
+class SpiralPolicy():
+    """ Target policy that returns control inputs that spiral into an origin
+    SprialPolicy(self.sampling_period, self.MAP.origin, 0.001, 0.01)
+    """
+    def __init__(self, sampling_period, maporigin, spiralmin, spiralmax, d_th=3.0, lim_vel=2.0):
+        self.sampling_period = sampling_period
+        self.maporigin = maporigin
+        self.d_th = d_th
+        self.spiralmin = spiralmin
+        self.spiralmax = spiralmax
+        self.limit = np.array([[-lim_vel, -np.pi], [lim_vel, np.pi]])
+
+    def get_control(self, odom):
+        th = self.d_th/180.0*np.pi
+        r = np.sqrt((odom[0] - self.maporigin[0])**2 + (odom[1] - self.maporigin[1])**2) \
+                - self.spiralgain*self.t
+        alpha = np.arctan2(odom[1] - self.maporigin[0], odom[0] - self.maporigin[1])
+        x = r*np.cos(alpha+th) + self.maporigin[0] + np.random.random() - 0.5
+        y = r*np.sin(alpha+th) + self.maporigin[1] + np.random.random() - 0.5
+        v = np.sqrt((x - odom[0])**2 + (y - odom[1])**2)/self.sampling_period
+        w = util.wrap_around(np.arctan2(y - odom[1], x - odom[0]) - odom[2])/self.sampling_period
+        self.t += 1
+        return np.clip(np.array([v,w]), self.limit[0], self.limit[1])
+
+    def collision(self):
+        self.d_th = -self.d_th
+
+    def reset(self, init_odom):
+        self.d_th = np.random.random()*np.pi
+        self.spiralgain = np.random.uniform(self.spiralmin, self.spiralmax)
+        print(self.spiralgain)
+        self.t = 0
+
 class SinePolicy():
+    """ Target policy that returns control inputs that follow a sine function
+    SinePolicy(0.5, 0.5, 2.0, self.sampling_period)
+    """
     def __init__(self, x_interval, a, b, sampling_period, lim_vel=2.0):
         self.x_interval = x_interval
         self.a = a # constant factor to x
@@ -42,7 +80,10 @@ class SinePolicy():
         self.init_org = init_odom[:2]
 
 class CirclePolicy():
-    def __init__(self, sampling_period, maporigin, d_th, lim_vel=2.0):
+    """ Target policy that returns control inputs that follow a circle function
+    CirclePolicy(self.sampling_period, self.MAP.origin)
+    """
+    def __init__(self, sampling_period, maporigin, d_th=3.0, lim_vel=2.0):
         self.sampling_period = sampling_period
         self.maporigin = maporigin
         self.d_th = d_th
@@ -61,10 +102,12 @@ class CirclePolicy():
     def collision(self):
         self.d_th = -self.d_th
 
-    def reset(self):
+    def reset(self, init_odom):
         self.d_th = np.random.random()*np.pi
 
 class ConstantPolicy():
+    """ Target policy that returns control inputs that remains stationary with small noise
+    """
     def __init__(self, noise_cov, lim_vel=2.0):
         self.noise_cov = noise_cov
         self.limit = np.array([[-lim_vel, -np.pi/5], [lim_vel, np.pi/5]])
