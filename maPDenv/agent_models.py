@@ -71,6 +71,7 @@ class AgentSE2(Agent):
                         margin=METADATA['margin'], policy=None):
         super().__init__(agent_id, dim, sampling_period, limit, collision_func, margin=margin)
         self.policy = policy
+        self.state = np.zeros(dim)
 
     def reset(self, init_state):
         super().reset(init_state)
