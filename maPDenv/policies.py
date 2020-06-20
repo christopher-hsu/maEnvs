@@ -44,7 +44,6 @@ class SpiralPolicy():
     def reset(self, init_odom):
         self.d_th = np.random.random()*np.pi
         self.spiralgain = np.random.uniform(self.spiralmin, self.spiralmax)
-        print(self.spiralgain)
         self.t = 0
 
 class SinePolicy():
