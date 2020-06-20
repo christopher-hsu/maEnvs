@@ -13,12 +13,16 @@ def vectorized_wrap_around(x):
     x[x<-np.pi] += 2*np.pi
     return x
 
-def global_relative_measure(x_target, x_main):
+def global_relative_measure(x_target, x_main, flat=False):
     diff = x_target - x_main
     r = np.sqrt(np.sum(diff**2, axis=1))
     alpha = vectorized_wrap_around(np.arctan2(diff[:,1],diff[:,0]))
-    #Rearrange to [r,alpha]*(nb_agents,nb_targets)
-    global_state = np.ndarray.flatten(np.vstack((r,alpha)).T)
+    #Rearrange to [r,alpha], [1,nb]
+    if flat == True:
+        global_state = np.ndarray.flatten(np.vstack((r,alpha)).T)
+    #Rearrange to [r,alpha], [nb,2]
+    else:
+        global_state = np.vstack((r,alpha)).T
     return global_state
 
 def cartesian2polar(xy):
