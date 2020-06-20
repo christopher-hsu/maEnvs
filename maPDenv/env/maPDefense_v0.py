@@ -23,7 +23,8 @@ o_d : linear distance to the closet obstacle point
 o_alpha : angular distance to the closet obstacle point
 
 [Environment Description]
-Varying number of agents, varying number of randomly moving targets
+Varying number of agents, varying number of sprialing targets
+Defend the perimeter!
 No obstacles
 
 maPDefenseEnv0 : SE2 Target model with UKF belief tracker
