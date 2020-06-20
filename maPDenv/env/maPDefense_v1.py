@@ -136,7 +136,6 @@ class maPDefenseEnv1(maPDefenseBase):
                         init_cov=self.target_init_cov)
             t_init = np.concatenate((init_pose['targets'][nn], [self.target_init_vel[0], 0.0]))
             self.targets[nn].reset(t_init)
-            self.targets[nn].policy.reset(t_init)
         # For nb agents calculate belief of targets assigned
         for jj in range(self.nb_targets):
             for kk in range(self.nb_agents):
