@@ -50,6 +50,7 @@ class maPDefenseEnv0(maPDefenseBase):
         self.agent_dim = 3
         self.target_dim = 3
         self.target_init_vel = np.array(METADATA['target_init_vel'])
+        self.perimeter_radius = METADATA['perimeter_radius']
         # LIMIT
         self.limit = {} # 0: low, 1:highs
         self.limit['agent'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
@@ -102,7 +103,7 @@ class maPDefenseEnv0(maPDefenseBase):
 
     def get_reward(self, obstacles_pt=None, observed=None, is_training=True):
         return self.reward_fun(observed, self.origin_init_pos, 
-                            METADATA['perimeter_radius'], is_training)
+                            self.perimeter_radius, is_training)
 
     def reward_fun(self, observed, goal_origin, goal_radius, 
                     is_training=True, c_mean=0.1):

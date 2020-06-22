@@ -28,10 +28,12 @@ class Display2D(Wrapper):
         self.mapmin = self.env_core.MAP.mapmin
         self.mapmax = self.env_core.MAP.mapmax
         self.mapres = self.env_core.MAP.mapres
+        self.origin = self.env_core.MAP.origin
         self.fig = plt.figure(self.figID)
         self.n_frames = 0 
         self.skip = skip
         self.c_cf = np.sqrt(-2*np.log(1-confidence))
+        self.perimeter_radius = self.env_core.perimeter_radius
 
     def pos2map(self, obs, sd):
         x = obs[:,0]
@@ -44,14 +46,12 @@ class Display2D(Wrapper):
         if not hasattr(self, 'traj'):
             raise ValueError('Must do a env.reset() first before calling env.render()')
 
-        # num_agents = len(self.traj)
         num_agents = self.env_core.nb_agents
         if type(self.env_core.agents) == list:
             agent_pos = [self.env_core.agents[i].state for i in range(num_agents)]
         else:
             agent_pos = self.env_core.agents.state
 
-        # num_targets = len(self.traj_y)
         num_targets = self.env_core.nb_targets
         if type(self.env_core.targets) == list:
             target_true_pos = [self.env_core.targets[i].state[:2] for i in range(num_targets)]
@@ -70,6 +70,11 @@ class Display2D(Wrapper):
                 im = ax.imshow(self.map, cmap='gray_r', origin='lower',
                     extent=[self.mapmin[0], self.mapmax[0], self.mapmin[1], self.mapmax[1]])
 
+            # Perimeter defense
+            perimeter = plt.Circle(self.origin, self.perimeter_radius, color='r', fill=False)
+            ax.add_artist(perimeter)
+
+            # Plot agents and targets
             for ii in range(num_agents):
                 #agents positions
                 ax.plot(agent_pos[ii][0], agent_pos[ii][1], marker=(3, 0, agent_pos[ii][2]/np.pi*180-90),
