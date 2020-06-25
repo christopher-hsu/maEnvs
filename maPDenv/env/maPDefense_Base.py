@@ -152,7 +152,6 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
             return self.get_init_pose_pd(**kwargs)
 
 
-    @profile
     def get_init_pose_pd(self,
                         lin_dist_range_agent=(METADATA['agent_init_dist_min'], METADATA['agent_init_dist_max']),
                         ang_dist_range_agent=(-np.pi, np.pi),
