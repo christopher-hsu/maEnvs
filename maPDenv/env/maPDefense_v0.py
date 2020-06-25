@@ -230,9 +230,6 @@ class maPDefenseEnv0(maPDefenseBase):
                 self.origin_init_pos[:2], self.origin_init_pos[2],
                 lin_dist_range_target[0], lin_dist_range_target[1],
                 ang_dist_range_target[0], ang_dist_range_target[1])
-            is_blocked = map_utils.is_blocked(self.MAP, self.origin_init_pos[:2], init_pose_target[:2])
-            if is_target_valid:
-                is_target_valid = (blocked == is_blocked)
 
         is_belief_valid, init_pose_belief = False, np.zeros((2,))
         while((not is_belief_valid) and is_target_valid):
