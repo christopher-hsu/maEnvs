@@ -181,9 +181,9 @@ class maTrackingBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
                     init_pose['agents'][rand_agent][:2], init_pose['agents'][rand_agent][2],
                     lin_dist_range_target[0], lin_dist_range_target[1],
                     ang_dist_range_target[0], ang_dist_range_target[1])
-                is_blocked = map_utils.is_blocked(self.MAP, init_pose['agents'][rand_agent][:2], init_pose_target[:2])
-                if is_target_valid:
-                    is_target_valid = (blocked == is_blocked)
+                # is_blocked = map_utils.is_blocked(self.MAP, init_pose['agents'][rand_agent][:2], init_pose_target[:2])
+                # if is_target_valid:
+                #     is_target_valid = (blocked == is_blocked)
             init_pose['targets'].append(init_pose_target)
 
             is_belief_valid, init_pose_belief = False, np.zeros((2,))

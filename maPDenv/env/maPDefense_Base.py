@@ -151,6 +151,8 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
         else:
             return self.get_init_pose_pd(**kwargs)
 
+
+    @profile
     def get_init_pose_pd(self,
                         lin_dist_range_agent=(METADATA['agent_init_dist_min'], METADATA['agent_init_dist_max']),
                         ang_dist_range_agent=(-np.pi, np.pi),
@@ -171,9 +173,6 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
                     self.origin_init_pos[:2], self.origin_init_pos[2],
                     lin_dist_range_agent[0], lin_dist_range_agent[1],
                     ang_dist_range_agent[0], ang_dist_range_agent[1])
-                is_blocked = map_utils.is_blocked(self.MAP, self.origin_init_pos[:2], init_pose_agent[:2])
-                if is_agent_valid:
-                    is_agent_valid = (blocked == is_blocked)
             init_pose['agents'].append(init_pose_agent)
 
         init_pose['targets'], init_pose['belief_targets'] = [], []
@@ -184,9 +183,6 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
                     self.origin_init_pos[:2], self.origin_init_pos[2],
                     lin_dist_range_target[0], lin_dist_range_target[1],
                     ang_dist_range_target[0], ang_dist_range_target[1])
-                is_blocked = map_utils.is_blocked(self.MAP, self.origin_init_pos[:2], init_pose_target[:2])
-                if is_target_valid:
-                    is_target_valid = (blocked == is_blocked)
             init_pose['targets'].append(init_pose_target)
 
             is_belief_valid, init_pose_belief = False, np.zeros((2,))
