@@ -169,6 +169,7 @@ class maPDefenseEnv0(maPDefenseBase):
         reward_dict = {}
         done_dict = {'__all__':False}
         info_dict = {}
+        all_observations = np.zeros(self.nb_targets, dtype=bool)
 
         # Targets move (t -> t+1)
         for n in range(self.nb_targets):
@@ -188,7 +189,12 @@ class maPDefenseEnv0(maPDefenseBase):
                     margin_pos.append(np.array(self.agents[p].state[:2]))
             _ = self.agents[ii].update(action_vw, margin_pos)
             
+            # Target and map observations
             observed = np.zeros(self.nb_targets, dtype=bool)
+            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
+            # if obstacles_pt is None:
+            obstacles_pt = (self.sensor_r, np.pi)
+
             # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
@@ -198,21 +204,17 @@ class maPDefenseEnv0(maPDefenseBase):
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
 
-            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
-
-            # if obstacles_pt is None:
-            obstacles_pt = (self.sensor_r, np.pi)
-            # Calculate beliefs on only assigned targets
-            for kk in range(self.nb_targets):
-                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[kk].state[:2],
+                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[jj].state[:2],
                                         xy_base=self.agents[ii].state[:2], 
                                         theta_base=self.agents[ii].state[-1])
                 obs_dict[agent_id].append([r_b, alpha_b,
-                                        np.log(LA.det(self.belief_targets[kk].cov)), 
-                                        float(observed[kk]), obstacles_pt[0], obstacles_pt[1]])
+                                        np.log(LA.det(self.belief_targets[jj].cov)), 
+                                        float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+            all_observations = np.logical_or(all_observations, observed)
+
         # Get all rewards after all agents and targets move (t -> t+1)
-        reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, observed, self.is_training)
+        reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, all_observations, self.is_training)
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
         return obs_dict, reward_dict, done_dict, info_dict
 
