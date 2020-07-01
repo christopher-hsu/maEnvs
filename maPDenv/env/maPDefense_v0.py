@@ -72,8 +72,6 @@ class maPDefenseEnv0(maPDefenseBase):
         # Build a target
         self.setup_targets()
         self.setup_belief_targets()
-        # Use custom reward
-        # self.get_reward()
 
     def setup_agents(self):
         self.agents = [AgentSE2(agent_id = 'agent-' + str(i), 
@@ -132,12 +130,14 @@ class maPDefenseEnv0(maPDefenseBase):
         Agents are given random positions in the map, targets are given random positions near a random agent.
         Return an observation state dict with agent ids (keys) that refer to their observation
         """
-        try: 
-            self.nb_agents = kwargs['nb_agents']
-            self.nb_targets = kwargs['nb_targets']
-        except:
-            self.nb_agents = np.random.random_integers(1, self.num_agents)
-            self.nb_targets = np.random.random_integers(1, self.num_targets)
+        # try: 
+            # self.nb_agents = kwargs['nb_agents']
+            # self.nb_targets = kwargs['nb_targets']
+        # except:
+            # self.nb_agents = np.random.random_integers(1, self.num_agents)
+            # self.nb_targets = np.random.random_integers(1, self.num_targets)
+        # self.rdot = 
+        # self.thetadot = 
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
         # Initialize agents
