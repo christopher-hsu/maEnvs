@@ -78,8 +78,6 @@ class maPDefenseEnv1(maPDefenseBase):
         # Build a target
         self.setup_targets()
         self.setup_belief_targets()
-        # Use custom reward
-        # self.get_reward()
 
     def setup_agents(self):
         self.agents = [AgentSE2(agent_id = 'agent-' + str(i), 
