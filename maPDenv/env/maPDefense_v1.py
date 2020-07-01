@@ -48,7 +48,8 @@ class maPDefenseEnv1(maPDefenseBase):
         self.nb_targets = num_targets #only for init, will change with reset()
         self.agent_dim = 3
         self.target_dim = 5
-        self.target_init_vel = METADATA['target_init_vel']*np.ones((2,))
+        self.target_init_vel = np.array(METADATA['target_init_vel'])
+        self.perimeter_radius = METADATA['perimeter_radius']
         # LIMIT
         self.limit = {} # 0: low, 1:highs
         self.limit['agent'] = [np.concatenate((self.MAP.mapmin,[-np.pi])), np.concatenate((self.MAP.mapmax, [np.pi]))]
@@ -78,7 +79,7 @@ class maPDefenseEnv1(maPDefenseBase):
         self.setup_targets()
         self.setup_belief_targets()
         # Use custom reward
-        self.get_reward()
+        # self.get_reward()
 
     def setup_agents(self):
         self.agents = [AgentSE2(agent_id = 'agent-' + str(i), 
@@ -92,8 +93,8 @@ class maPDefenseEnv1(maPDefenseBase):
                         dim=self.target_dim, sampling_period=self.sampling_period, 
                         limit=self.limit['target'],
                         collision_func=lambda x: map_utils.is_collision(self.MAP, x),
-                        # policy=ConstantPolicy(self.target_noise_cov[3:, 3:]))
-                        policy=SinePolicy(0.1, 0.5, 5.0, self.sampling_period))
+                        policy=SpiralPolicy(self.sampling_period, self.MAP.origin, 
+                                            METADATA['spiral_min'], METADATA['spiral_max']))
                         for i in range(self.num_targets)]
 
 
@@ -108,7 +109,29 @@ class maPDefenseEnv1(maPDefenseBase):
 
 
     def get_reward(self, obstacles_pt=None, observed=None, is_training=True):
-        return reward_fun(self.nb_targets, self.belief_targets, is_training)
+        return self.reward_fun(observed, self.origin_init_pos, 
+                            self.perimeter_radius, is_training)
+
+    def reward_fun(self, observed, goal_origin, goal_radius, 
+                    is_training=True, c_mean=0.1):
+        """ Return a reward for targets that enter the goal radius or observed
+        +1 for observed, -1 for entering goal radius
+        """
+        intruder = observed.astype(float)
+        target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
+        global_states = util.global_relative_measure(target_states, goal_origin)
+        intruder[global_states[:,0] < goal_radius] = -1
+
+        reward = np.sum(intruder)
+        done = False
+        mean_nlogdetcov = 0.0
+
+        #if captured or entered goal reset target pose
+        for ii, rew in enumerate(intruder):
+            if rew != 0:
+                self.reset_target_pose(target_id=ii)
+
+        return reward, done, mean_nlogdetcov
 
     def reset(self,**kwargs):
         """
@@ -154,6 +177,7 @@ class maPDefenseEnv1(maPDefenseBase):
         reward_dict = {}
         done_dict = {'__all__':False}
         info_dict = {}
+        all_observations = np.zeros(self.nb_targets, dtype=bool)
 
         # Targets move (t -> t+1)
         for n in range(self.nb_targets):
@@ -173,7 +197,12 @@ class maPDefenseEnv1(maPDefenseBase):
                     margin_pos.append(np.array(self.agents[p].state[:2]))
             _ = self.agents[ii].update(action_vw, margin_pos)
             
+            # Target and map observations
             observed = []
+            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
+            # if obstacles_pt is None:
+            obstacles_pt = (self.sensor_r, np.pi)
+
             # Update beliefs of targets using UKF
             for jj in range(self.nb_targets):
                 # Observe
@@ -183,36 +212,49 @@ class maPDefenseEnv1(maPDefenseBase):
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
 
-            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
-
-            # if obstacles_pt is None:
-            obstacles_pt = (self.sensor_r, np.pi)
-            # Calculate beliefs on only assigned targets
-            for kk in range(self.nb_targets):
-                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[kk].state[:2],
+                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[jj].state[:2],
                                         xy_base=self.agents[ii].state[:2], 
                                         theta_base=self.agents[ii].state[-1])
                 r_dot_b, alpha_dot_b = util.relative_velocity_polar(
-                                        self.belief_targets[kk].state[:2],
-                                        self.belief_targets[kk].state[2:],
+                                        self.belief_targets[jj].state[:2],
+                                        self.belief_targets[jj].state[2:],
                                         self.agents[ii].state[:2], self.agents[ii].state[-1],
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
-                                        np.log(LA.det(self.belief_targets[kk].cov)), 
-                                        float(observed[kk]), obstacles_pt[0], obstacles_pt[1]])
+                                        np.log(LA.det(self.belief_targets[jj].cov)), 
+                                        float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+            all_observations = np.logical_or(all_observations, observed)
+
         # Get all rewards after all agents and targets move (t -> t+1)
-        reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, observed, self.is_training)
+        reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, all_observations, self.is_training)
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
         return obs_dict, reward_dict, done_dict, info_dict
 
-def reward_fun(nb_targets, belief_targets, is_training=True, c_mean=0.1):
-    detcov = [LA.det(b_target.cov) for b_target in belief_targets[:nb_targets]]
-    r_detcov_mean = - np.mean(np.log(detcov))# - np.std(np.log(detcov))
-    reward = c_mean * r_detcov_mean
+    def reset_target_pose(self, target_id,
+                lin_dist_range_target=(METADATA['target_init_dist_min'], METADATA['target_init_dist_max']),
+                ang_dist_range_target=(-np.pi, np.pi),
+                lin_dist_range_belief=(METADATA['init_belief_distance_min'], METADATA['init_belief_distance_max']),
+                ang_dist_range_belief=(-np.pi, np.pi),
+                blocked=False):
+        """if captured or entered goal reset target pose and belief
+        """
+        is_target_valid = False
+        while(not is_target_valid):
+            is_target_valid, init_pose_target = self.gen_rand_pose(
+                self.origin_init_pos[:2], self.origin_init_pos[2],
+                lin_dist_range_target[0], lin_dist_range_target[1],
+                ang_dist_range_target[0], ang_dist_range_target[1])
 
-    mean_nlogdetcov = None
-    if not(is_training):
-        logdetcov = [np.log(LA.det(b_target.cov)) for b_target in belief_targets[:nb_targets]]
-        mean_nlogdetcov = -np.mean(logdetcov)
-    return reward, False, mean_nlogdetcov
+        is_belief_valid, init_pose_belief = False, np.zeros((2,))
+        while((not is_belief_valid) and is_target_valid):
+            is_belief_valid, init_pose_belief = self.gen_rand_pose(
+                init_pose_target[:2], init_pose_target[2],
+                lin_dist_range_belief[0], lin_dist_range_belief[1],
+                ang_dist_range_belief[0], ang_dist_range_belief[1])
+
+        self.belief_targets[target_id].reset(
+                    init_state=np.concatenate((init_pose_belief, np.zeros(2))),
+                    init_cov=self.target_init_cov)
+        t_init = np.concatenate((init_pose_target, [self.target_init_vel[0], 0.0]))
+        self.targets[target_id].reset(t_init)
