@@ -113,7 +113,7 @@ class maPDefenseEnv0(maPDefenseBase):
         global_states = util.global_relative_measure(target_states, goal_origin)
         intruder[global_states[:,0] < goal_radius] = -1
 
-        reward = np.sum(intruder)
+
         done = False
         mean_nlogdetcov = 0.0
 
@@ -121,6 +121,9 @@ class maPDefenseEnv0(maPDefenseBase):
         for ii, rew in enumerate(intruder):
             if rew != 0:
                 self.reset_target_pose(target_id=ii)
+
+        intruder[intruder>0] = 0
+        reward = np.sum(intruder)
 
         return reward, done, mean_nlogdetcov
 
