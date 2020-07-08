@@ -201,9 +201,11 @@ class maPDefenseEnv0(maPDefenseBase):
             # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
-                obs = self.observation(self.targets[jj], self.agents[ii])
-                observed[jj] = obs[0]
-                self.belief_targets[jj].update(obs[0], obs[1], self.agents[ii].state,
+                obs, z_t, spot = self.observation(self.targets[jj], self.agents[ii])
+                observed[jj] = obs
+
+                #if spotted than target has also been observed
+                self.belief_targets[jj].update(spot, z_t, self.agents[ii].state,    
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
 
@@ -212,7 +214,8 @@ class maPDefenseEnv0(maPDefenseBase):
                                         theta_base=self.agents[ii].state[-1])
                 obs_dict[agent_id].append([r_b, alpha_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
-                                        float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
+                                        float(obs + spot), obstacles_pt[0], obstacles_pt[1]])
+                                        # float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
             all_observations = np.logical_or(all_observations, observed)
 
@@ -220,6 +223,38 @@ class maPDefenseEnv0(maPDefenseBase):
         reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, all_observations, self.is_training)
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
         return obs_dict, reward_dict, done_dict, info_dict
+
+    def observation(self, target, agent):
+        r, alpha = util.relative_distance_polar(target.state[:2],
+                                            xy_base=agent.state[:2], 
+                                            theta_base=agent.state[2])    
+        # observed is a bool for capturing targets with short range sensor
+        observed = (r <= self.sensor_r) \
+                    & (abs(alpha) <= self.fov/2/180*np.pi) \
+                    & (not(map_utils.is_blocked(self.MAP, agent.state, target.state)))
+        # spotted is a bool for scouting targets with long range sensor
+        spotted = (r <= self.sensor_r_long) \
+                    & (abs(alpha) <= self.fov/2/180*np.pi) \
+                    & (not(map_utils.is_blocked(self.MAP, agent.state, target.state)))
+        z = None
+
+        if spotted:
+            z = np.array([r, alpha])
+            z += self.np_random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+        
+        if observed:
+            z = np.array([r, alpha])
+            # z += np.random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+            z += self.np_random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+        '''For some reason, self.np_random is needed only here instead of np.random in order for the 
+        RNG seed to work, if used in the gen_rand_pose functions RNG seed will NOT work '''
+
+        return observed, z, spotted
+
+    def observation_noise(self, z):
+        obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+                                [0.0, self.sensor_b_sd * self.sensor_b_sd]])
+        return obs_noise_cov
 
     def reset_target_pose(self, target_id,
                 lin_dist_range_target=(METADATA['target_init_dist_min'], METADATA['target_init_dist_max']),
