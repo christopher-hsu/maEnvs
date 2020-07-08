@@ -80,7 +80,7 @@ class Display2D(Wrapper):
                 ax.plot(agent_pos[ii][0], agent_pos[ii][1], marker=(3, 0, agent_pos[ii][2]/np.pi*180-90),
                     markersize=10, linestyle='None', markerfacecolor='b', markeredgecolor='b')
                 ax.plot(self.traj[ii][0], self.traj[ii][1], 'b.', markersize=1)
-                #agents sensor indicators
+                #agents sensor indicators short range
                 sensor_arc = patches.Arc((agent_pos[ii][0], agent_pos[ii][1]), METADATA['sensor_r']*2, METADATA['sensor_r']*2, 
                     angle = agent_pos[ii][2]/np.pi*180, theta1 = -METADATA['fov']/2, theta2 = METADATA['fov']/2, facecolor='gray')
                 ax.add_patch(sensor_arc)
@@ -88,6 +88,14 @@ class Display2D(Wrapper):
                     [agent_pos[ii][1], agent_pos[ii][1]+METADATA['sensor_r']*np.sin(agent_pos[ii][2]+0.5*METADATA['fov']/180.0*np.pi)],'k', linewidth=0.5)
                 ax.plot([agent_pos[ii][0], agent_pos[ii][0]+METADATA['sensor_r']*np.cos(agent_pos[ii][2]-0.5*METADATA['fov']/180.0*np.pi)],
                     [agent_pos[ii][1], agent_pos[ii][1]+METADATA['sensor_r']*np.sin(agent_pos[ii][2]-0.5*METADATA['fov']/180.0*np.pi)],'k', linewidth=0.5)
+                #agents sensor indicators long range
+                sensor_arc = patches.Arc((agent_pos[ii][0], agent_pos[ii][1]), METADATA['sensor_r_long']*2, METADATA['sensor_r_long']*2, 
+                    angle = agent_pos[ii][2]/np.pi*180, theta1 = -METADATA['fov']/2, theta2 = METADATA['fov']/2, facecolor='gray')
+                ax.add_patch(sensor_arc)
+                ax.plot([agent_pos[ii][0], agent_pos[ii][0]+METADATA['sensor_r_long']*np.cos(agent_pos[ii][2]+0.5*METADATA['fov']/180.0*np.pi)],
+                    [agent_pos[ii][1], agent_pos[ii][1]+METADATA['sensor_r_long']*np.sin(agent_pos[ii][2]+0.5*METADATA['fov']/180.0*np.pi)],'k', linewidth=0.5)
+                ax.plot([agent_pos[ii][0], agent_pos[ii][0]+METADATA['sensor_r_long']*np.cos(agent_pos[ii][2]-0.5*METADATA['fov']/180.0*np.pi)],
+                    [agent_pos[ii][1], agent_pos[ii][1]+METADATA['sensor_r_long']*np.sin(agent_pos[ii][2]-0.5*METADATA['fov']/180.0*np.pi)],'k', linewidth=0.5)
                 self.traj[ii][0].append(agent_pos[ii][0])
                 self.traj[ii][1].append(agent_pos[ii][1])
 
