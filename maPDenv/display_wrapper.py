@@ -100,7 +100,7 @@ class Display2D(Wrapper):
                 self.traj[ii][1].append(agent_pos[ii][1])
 
             for jj in range(num_targets):
-                ax.plot(self.traj_y[jj][0], self.traj_y[jj][1], 'r.', markersize=1)
+                # ax.plot(self.traj_y[jj][0], self.traj_y[jj][1], 'r.', markersize=1)
                 ax.plot(target_true_pos[jj][0], target_true_pos[jj][1], marker='o', markersize=5, 
                     linestyle='None', markerfacecolor='r', markeredgecolor='r')
                 # Belief on target
