@@ -91,7 +91,7 @@ METADATA_pd_v1={   #Beliefs are initialized near target
         'action_w': [np.pi/2, 0, -np.pi/2], # action primitives - angular velocities.
         'const_q': 0.001, # target noise constant in beliefs.
         'const_q_true': 0.01, # target noise constant of actual targets.
-        'spiral_min': 0.001, # minimum factor of target spiral
+        'spiral_min': 0.05, # minimum factor of target spiral
         'spiral_max': 0.01,  # maximum factor of target spiral
         'perimeter_radius': 10.0 # radius of the perimeter to defend
     }
