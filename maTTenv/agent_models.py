@@ -39,33 +39,6 @@ class Agent(object):
     def reset(self, init_state):
         self.state = init_state
 
-
-class AgentDoubleInt2D(Agent):
-    def __init__(self, agent_id, dim, sampling_period, limit, collision_func, 
-                    margin=METADATA['margin'], A=None, W=None):
-        super().__init__(agent_id, dim, sampling_period, limit, collision_func, margin=margin)
-        self.A = np.eye(self.dim) if A is None else A
-        self.W = W
-
-    def update(self, margin_pos=None):
-        new_state = np.matmul(self.A, self.state)
-        if self.W is not None:
-            noise_sample = np.random.multivariate_normal(np.zeros(self.dim,), self.W)
-            new_state += noise_sample
-        if self.collision_check(new_state[:2]):
-            new_state = self.collision_control(new_state)
-
-        self.state = new_state
-        # self.range_check()
-
-    def collision_control(self, new_state):
-        new_state[0] = self.state[0]
-        new_state[1] = self.state[1]
-        if self.dim > 2:
-            new_state[2] = -2 * .2 * new_state[2] + np.random.normal(0.0, 0.2)#-0.001*np.sign(new_state[2])
-            new_state[3] = -2 * .2 * new_state[3] + np.random.normal(0.0, 0.2)#-0.001*np.sign(new_state[3])
-        return new_state
-
 class AgentSE2(Agent):
     def __init__(self, agent_id, dim, sampling_period, limit, collision_func, 
                         margin=METADATA['margin'], policy=None):
@@ -129,10 +102,36 @@ def SE2DynamicsVel(x, dt, u=None):
     odom = SE2Dynamics(x[:3], dt, u)
     return np.concatenate((odom, u))
 
+class AgentDoubleInt2D(Agent):
+    def __init__(self, agent_id, dim, sampling_period, limit, collision_func, 
+                    margin=METADATA['margin'], A=None, W=None):
+        super().__init__(agent_id, dim, sampling_period, limit, collision_func, margin=margin)
+        self.A = np.eye(self.dim) if A is None else A
+        self.W = W
+
+    def update(self, margin_pos=None):
+        new_state = np.matmul(self.A, self.state)
+        if self.W is not None:
+            noise_sample = np.random.multivariate_normal(np.zeros(self.dim,), self.W)
+            new_state += noise_sample
+        if self.collision_check(new_state[:2]):
+            new_state = self.collision_control(new_state)
+
+        self.state = new_state
+        # self.range_check()
+
+    def collision_control(self, new_state):
+        new_state[0] = self.state[0]
+        new_state[1] = self.state[1]
+        if self.dim > 2:
+            new_state[2] = -2 * .2 * new_state[2] + np.random.normal(0.0, 0.2)#-0.001*np.sign(new_state[2])
+            new_state[3] = -2 * .2 * new_state[3] + np.random.normal(0.0, 0.2)#-0.001*np.sign(new_state[3])
+        return new_state
+
 class AgentDoubleInt2D_Avoidance(AgentDoubleInt2D):
-    def __init__(self, dim, sampling_period, limit, collision_func,
+    def __init__(self, agent_id, dim, sampling_period, limit, collision_func,
                     margin=METADATA['margin'], A=None, W=None, obs_check_func=None):
-        AgentDoubleInt2D.__init__(self, dim, sampling_period, limit,
+        super().__init__(agent_id, dim, sampling_period, limit,
             collision_func, margin=margin, A=A, W=W)
         self.obs_check_func = obs_check_func
 
@@ -178,7 +177,7 @@ class AgentDoubleInt2D_Avoidance(AgentDoubleInt2D):
         the closest obstacle point.
         """
         odom = [self.state[0], self.state[1], np.arctan2(self.state[3], self.state[2])]
-        obs_pos = self.obs_check_func(odom)
+        # obs_pos = self.obs_check_func(odom)
         v = np.sqrt(np.sum(np.square(self.state[2:]))) + np.random.normal(0.0,1.0)
         if obs_pos[1] >= 0:
             th = obs_pos[1] - (1 + np.random.random()) * np.pi/2
@@ -187,6 +186,31 @@ class AgentDoubleInt2D_Avoidance(AgentDoubleInt2D):
 
         state = np.array([self.state[0], self.state[1], v * np.cos(th + odom[2]), v * np.sin(th + odom[2])])
         return state
+
+    def obstacle_detour_maneuver(self, r_margin=1.0):
+        """
+        Returns del_vx, del_vy which will be added to the new state.
+        This provides a repultive force from the closest obstacle point based
+        on the current velocity, a linear distance, and an angular distance.
+
+        Parameters:
+        ----------
+        r_margin : float. A margin from an obstalce that you want to consider
+        as the minimum distance the target can get close to the obstacle.
+        """
+        odom = [self.state[0], self.state[1], np.arctan2(self.state[3], self.state[2])]
+        # obs_pos = self.obs_check_func(odom)
+        speed = np.sqrt(np.sum(self.state[2:]**2))
+        rot_ang = np.pi/2 * (1. + 1./(1. + np.exp(-(speed-0.5*METADATA['target_speed_limit']))))
+        if obs_pos is not None:
+            acc = max(0.0, speed * np.cos(obs_pos[1])) / max(METADATA['margin2wall'], obs_pos[0] - r_margin)
+            th = obs_pos[1] - rot_ang if obs_pos[1] >= 0 else obs_pos[1] + rot_ang
+            del_vx = acc * np.cos(th + odom[2]) * self.sampling_period
+            del_vy = acc * np.sin(th + odom[2]) * self.sampling_period
+            return del_vx, del_vy
+        else:
+            return 0., 0.
+
 
 class Agent2DFixedPath(Agent):
     def __init__(self, dim, sampling_period, limit, collision_func, path, margin=METADATA['margin']):
@@ -272,3 +296,27 @@ class AgentDoubleInt2D_Nonlinear(AgentDoubleInt2D):
 
         state = np.array([self.state[0], self.state[1], v * np.cos(th + odom[2]), v * np.sin(th + odom[2])])
         return state
+
+    def obstacle_detour_maneuver(self, r_margin=1.0):
+        """
+        Returns del_vx, del_vy which will be added to the new state.
+        This provides a repultive force from the closest obstacle point based
+        on the current velocity, a linear distance, and an angular distance.
+
+        Parameters:
+        ----------
+        r_margin : float. A margin from an obstalce that you want to consider
+        as the minimum distance the target can get close to the obstacle.
+        """
+        odom = [self.state[0], self.state[1], np.arctan2(self.state[3], self.state[2])]
+        obs_pos = self.obs_check_func(odom)
+        speed = np.sqrt(np.sum(self.state[2:]**2))
+        rot_ang = np.pi/2 * (1. + 1./(1. + np.exp(-(speed-0.5*METADATA['target_speed_limit']))))
+        if obs_pos is not None:
+            acc = max(0.0, speed * np.cos(obs_pos[1])) / max(METADATA['margin2wall'], obs_pos[0] - r_margin)
+            th = obs_pos[1] - rot_ang if obs_pos[1] >= 0 else obs_pos[1] + rot_ang
+            del_vx = acc * np.cos(th + odom[2]) * self.sampling_period
+            del_vy = acc * np.sin(th + odom[2]) * self.sampling_period
+            return del_vx, del_vy
+        else:
+            return 0., 0.
