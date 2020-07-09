@@ -90,7 +90,9 @@ class advTrackingEnv0(maTrackingBase):
                         dim=self.target_dim, sampling_period=self.sampling_period, 
                         limit=self.limit['target'],
                         collision_func=lambda x: map_utils.is_collision(self.MAP, x),
-                        A=self.targetA, W=self.target_true_noise_sd) 
+                        A=self.targetA, W=self.target_true_noise_sd,)
+                        # obs_check_func=lambda x: self.MAP.get_closest_obstacle(
+                                # x, fov=2*np.pi, r_max=10e2))
                         for i in range(self.num_targets)]
 
     def setup_belief_targets(self):
@@ -164,34 +166,33 @@ class advTrackingEnv0(maTrackingBase):
                 if agent_id != ids:
                     margin_pos.append(np.array(self.agents[p].state[:2]))
             _ = self.agents[ii].update(action_vw, margin_pos)
-            
-            observed = []
+
+            # Target and map observations
+            observed = np.zeros(self.nb_targets, dtype=bool)
+            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
+            # if obstacles_pt is None:
+            obstacles_pt = (self.sensor_r, np.pi)
+
             # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])
-                observed.append(obs[0])
+                observed[jj] = obs[0]
                 self.belief_targets[jj].predict() # Belief state at t+1
                 if obs[0]: # if observed, update the target belief.
                     self.belief_targets[jj].update(obs[1], self.agents[ii].state)
 
-            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
-
-            # if obstacles_pt is None:
-            obstacles_pt = (self.sensor_r, np.pi)
-            # Calculate beliefs on only assigned targets
-            for kk in range(self.nb_targets):
-                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[kk].state[:2],
+                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[jj].state[:2],
                                         xy_base=self.agents[ii].state[:2], 
                                         theta_base=self.agents[ii].state[-1])
                 r_dot_b, alpha_dot_b = util.relative_velocity_polar(
-                                        self.belief_targets[kk].state[:2],
-                                        self.belief_targets[kk].state[2:],
+                                        self.belief_targets[jj].state[:2],
+                                        self.belief_targets[jj].state[2:],
                                         self.agents[ii].state[:2], self.agents[ii].state[-1],
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
-                                        np.log(LA.det(self.belief_targets[kk].cov)), 
-                                        float(observed[kk]), obstacles_pt[0], obstacles_pt[1]])
+                                        np.log(LA.det(self.belief_targets[jj].cov)), 
+                                        float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
         # Get all rewards after all agents and targets move (t -> t+1)
         reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, observed, self.is_training)
