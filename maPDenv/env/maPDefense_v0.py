@@ -117,7 +117,7 @@ class maPDefenseEnv0(maPDefenseBase):
         intruder = observed.astype(float)
         target_states = [target.state for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
-        intruder[global_states[:,0] < goal_radius] = -1
+        intruder[global_states[:,0] < goal_radius] = -5
 
         done = False
         mean_nlogdetcov = 0.0
