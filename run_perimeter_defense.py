@@ -26,6 +26,7 @@ def main():
                     num_targets=args.nb_targets,
                     is_training=False,
                     )
+    rewards = []
     nlogdetcov = []
     action_dict = {}
     done = {'__all__':False}
@@ -40,9 +41,10 @@ def main():
             action_dict[agent_id] = env.action_space.sample()
 
         obs, rew, done, info = env.step(action_dict)
+        rewards.append(rew['__all__'])
         nlogdetcov.append(info['mean_nlogdetcov'])
 
-    print("Sum of negative logdet of the target belief covariances : %.2f"%np.sum(nlogdetcov))
+    print("Total episode reward : %.2f  Sum of negative logdet of the target belief covariances : %.2f"%(np.sum(rewards),np.sum(nlogdetcov)))
 
 if __name__ == "__main__":
     main()
