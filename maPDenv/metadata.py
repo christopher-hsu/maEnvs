@@ -98,7 +98,7 @@ METADATA_pd_v1={   #Beliefs are initialized near target
 
 METADATA_pd_v2={   #Beliefs are initialized near target
         'version' : 1,
-        'sensor_r': 7.0,   # sensor range capture
+        'sensor_r': 10.0,   # sensor range capture
         'sensor_r_long': 100.0,   # long range sensor for scouting
         'fov' : 90,
         'sensor_r_sd': 0.2, # sensor range noise.
@@ -108,8 +108,8 @@ METADATA_pd_v2={   #Beliefs are initialized near target
         'target_init_cov': 30.0, # initial target diagonal Covariance.
         'target_init_vel': [0.0, 0.0], # target's initial velocity.
         'target_vel_limit': 2.0, # velocity limit of targets.
-        'target_init_dist_min': 45.0, # the minimum distance btw targets and the origin.
-        'target_init_dist_max': 45.0, # the maximum distance btw targets and the origin.
+        'target_init_dist_min': 70.0, # the minimum distance btw targets and the origin.
+        'target_init_dist_max': 70.0, # the maximum distance btw targets and the origin.
         'init_belief_distance_min': 0.0, # the minimum distance btw belief and the target.
         'init_belief_distance_max': 5.0, # the maximum distance btw belief and the target.
         'margin': 1.0, # a marginal distance btw targets and the agent.
