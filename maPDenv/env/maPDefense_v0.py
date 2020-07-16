@@ -6,7 +6,7 @@ from maPDenv.maps import map_utils
 import maPDenv.util as util 
 from maPDenv.agent_models import *
 from maPDenv.belief_tracker import * #KFbelief
-from maPDenv.metadata import METADATA
+from maPDenv.metadata import METADATA_pd_v1
 from maPDenv.policies import *
 from maPDenv.env.maPDefense_Base import maPDefenseBase
 
