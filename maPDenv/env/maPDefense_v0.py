@@ -120,7 +120,6 @@ class maPDefenseEnv0(maPDefenseBase):
         intruder[global_states[:,0] < goal_radius] = -1
 
         done = False
-        mean_nlogdetcov = r_detcov_mean
 
         #if captured or entered goal reset target pose
         for ii, rew in enumerate(intruder):
@@ -128,9 +127,11 @@ class maPDefenseEnv0(maPDefenseBase):
                 self.reset_target_pose(target_id=ii)
 
         intruder[intruder>0] = 0
-        reward += np.sum(intruder)
+        tot_intruder = np.sum(intruder)
+        reward += tot_intruder
+        info_dict = {'mean_nlogdetcov': r_detcov_mean, 'num_intruders': tot_intruder}
 
-        return reward, done, mean_nlogdetcov
+        return reward, done, info_dict
 
     def reset(self,**kwargs):
         """
@@ -225,8 +226,8 @@ class maPDefenseEnv0(maPDefenseBase):
             all_observations = np.logical_or(all_observations, observed)
 
         # Get all rewards after all agents and targets move (t -> t+1)
-        reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, all_observations, self.is_training)
-        reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
+        reward, done, info_dict = self.get_reward(obstacles_pt, all_observations, self.is_training)
+        reward_dict['__all__'], done_dict['__all__'] = reward, done
         return obs_dict, reward_dict, done_dict, info_dict
 
     def observation(self, target, agent):

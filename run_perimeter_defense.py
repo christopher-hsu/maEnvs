@@ -28,6 +28,7 @@ def main():
                     )
     rewards = []
     nlogdetcov = []
+    intruders = []
     action_dict = {}
     done = {'__all__':False}
 
@@ -43,8 +44,9 @@ def main():
         obs, rew, done, info = env.step(action_dict)
         rewards.append(rew['__all__'])
         nlogdetcov.append(info['mean_nlogdetcov'])
+        intruders.append(info['num_intruders'])
 
-    print("Total episode reward : %.2f  Sum of negative logdet of the target belief covariances : %.2f"%(np.sum(rewards),np.sum(nlogdetcov)))
+    print("Total episode reward : %.2f,  Sum of neg logdet of the target belief covs : %.2f,  Total num of intruders : %d"%(np.sum(rewards),np.sum(nlogdetcov),np.sum(intruders)))
 
 if __name__ == "__main__":
     main()
