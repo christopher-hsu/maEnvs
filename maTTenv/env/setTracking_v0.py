@@ -108,6 +108,7 @@ class setTrackingEnv0(maTrackingBase):
         Agents are given random positions in the map, targets are given random positions near a random agent.
         Return an observation state dict with agent ids (keys) that refer to their observation
         """
+        self.rng = np.random.default_rng()
         try: 
             self.nb_agents = kwargs['nb_agents']
             self.nb_targets = kwargs['nb_targets']
@@ -192,6 +193,8 @@ class setTrackingEnv0(maTrackingBase):
                                         np.log(LA.det(self.belief_targets[kk].cov)), 
                                         float(observed[kk]), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+            # shuffle obs to promote permutation invariance
+            self.rng.shuffle(obs_dict[agent_id])
         # Get all rewards after all agents and targets move (t -> t+1)
         reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, observed, self.is_training)
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
