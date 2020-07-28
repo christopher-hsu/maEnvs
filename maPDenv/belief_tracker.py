@@ -191,9 +191,21 @@ class UKFbelief(object):
         self.ukf.P = self.cov
         self.ukf.Q = self.W # process noise matrix
 
+    def predict(self, u_t=None):
+        # Kalman Filter prediction
+        self.ukf.predict(u=u_t)
+
+        cov_new = self.ukf.P
+        state_new = self.ukf.x
+
+        # if LA.det(cov_new) < 1e6:
+        self.cov = cov_new
+        # if not(self.collision_func(state_new[:2])):
+        self.state = np.clip(state_new, self.limit[0], self.limit[1])
+
     def update(self, observed, z_t, x_t, u_t=None):
         # Kalman Filter Update
-        self.ukf.predict(u=u_t)
+        # self.ukf.predict(u=u_t)
 
         if observed:
             r_pred, alpha_pred = util.relative_distance_polar(self.ukf.x[:2], x_t[:2], x_t[2])
@@ -203,7 +215,7 @@ class UKFbelief(object):
         cov_new = self.ukf.P
         state_new = self.ukf.x
 
-        if LA.det(cov_new) < 1e6:
-            self.cov = cov_new
-        if not(self.collision_func(state_new[:2])):
-            self.state = np.clip(state_new, self.limit[0], self.limit[1])
+        # if LA.det(cov_new) < 1e6:
+        self.cov = cov_new
+        # if not(self.collision_func(state_new[:2])):
+        self.state = np.clip(state_new, self.limit[0], self.limit[1])

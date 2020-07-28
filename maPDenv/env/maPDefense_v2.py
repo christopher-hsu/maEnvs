@@ -191,6 +191,8 @@ class maPDefenseEnv2(maPDefenseBase):
         # Targets move (t -> t+1)
         for n in range(self.nb_targets):
             self.targets[n].update() 
+            self.belief_targets[n].predict(np.array([np.random.random(),
+                                                    np.pi*np.random.random()-0.5*np.pi]))
         # Agents move (t -> t+1) and observe the targets
         for ii, agent_id in enumerate(action_dict):
             obs_dict[self.agents[ii].agent_id] = []
@@ -268,10 +270,10 @@ class maPDefenseEnv2(maPDefenseBase):
         return observed, z, spotted
 
     def observation_noise(self, z):
-        # obs_noise_cov = z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
-                                        # [0.0, self.sensor_b_sd * self.sensor_b_sd]])
-        obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+        obs_noise_cov = z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
                                         [0.0, self.sensor_b_sd * self.sensor_b_sd]])
+        # obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+                                        # [0.0, self.sensor_b_sd * self.sensor_b_sd]])
         return obs_noise_cov
 
     def reset_target_pose(self, target_id,
