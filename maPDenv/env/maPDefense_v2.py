@@ -6,7 +6,7 @@ from maPDenv.maps import map_utils
 import maPDenv.util as util 
 from maPDenv.agent_models import *
 from maPDenv.belief_tracker import *
-from maPDenv.metadata import METADATA
+from maPDenv.metadata import METADATA_pd_v2
 from maPDenv.policies import *
 from maPDenv.env.maPDefense_Base import maPDefenseBase
 
@@ -23,8 +23,10 @@ o_d : linear distance to the closet obstacle point
 o_alpha : angular distance to the closet obstacle point
 
 [Environment Description]
-Varying number of agents, varying number of randomly moving targets
+Varying number of agents, varying number of sprialing targets
+Defend the perimeter!
 No obstacles
+Infinite sensing range with scaling noise
 
 maPDefenseEnv2 : SE2 Target model with UKF belief tracker
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
@@ -111,25 +113,34 @@ class maPDefenseEnv2(maPDefenseBase):
                             self.perimeter_radius, is_training)
 
     def reward_fun(self, observed, goal_origin, goal_radius, 
-                    is_training=True, c_mean=0.1):
+                    is_training=True, c_mean=0.001):
         """ Return a reward for targets that enter the goal radius or observed
-        +1 for observed, -1 for entering goal radius
+        -1 for entering goal radius
         """
+        # tracking reward
+        detcov = [LA.det(b_target.cov) for b_target in self.belief_targets[:self.nb_targets]]
+        r_detcov_mean = -np.mean(np.log(detcov))
+        reward = c_mean * r_detcov_mean
+
+        # perimeter defense reward
         intruder = observed.astype(float)
         target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
         intruder[global_states[:,0] < goal_radius] = -1
 
-        reward = np.sum(intruder)
         done = False
-        mean_nlogdetcov = 0.0
 
         #if captured or entered goal reset target pose
         for ii, rew in enumerate(intruder):
             if rew != 0:
                 self.reset_target_pose(target_id=ii)
 
-        return reward, done, mean_nlogdetcov
+        intruder[intruder>0] = 0
+        tot_intruder = np.sum(intruder)
+        reward += tot_intruder
+        info_dict = {'mean_nlogdetcov': r_detcov_mean, 'num_intruders': tot_intruder}
+
+        return reward, done, info_dict
 
     def reset(self,**kwargs):
         """
@@ -137,12 +148,12 @@ class maPDefenseEnv2(maPDefenseBase):
         Agents are given random positions in the map, targets are given random positions near a random agent.
         Return an observation state dict with agent ids (keys) that refer to their observation
         """
-        try: 
-            self.nb_agents = kwargs['nb_agents']
-            self.nb_targets = kwargs['nb_targets']
-        except:
-            self.nb_agents = np.random.random_integers(1, self.num_agents)
-            self.nb_targets = np.random.random_integers(1, self.num_targets)
+        # try: 
+        #     self.nb_agents = kwargs['nb_agents']
+        #     self.nb_targets = kwargs['nb_targets']
+        # except:
+        #     self.nb_agents = np.random.random_integers(1, self.num_agents)
+        #     self.nb_targets = np.random.random_integers(1, self.num_targets)
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
         # Initialize agents
@@ -196,7 +207,7 @@ class maPDefenseEnv2(maPDefenseBase):
             _ = self.agents[ii].update(action_vw, margin_pos)
             
             # Target and map observations
-            observed = []
+            observed = np.zeros(self.nb_targets, dtype=bool)
             # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
             # if obstacles_pt is None:
             obstacles_pt = (self.sensor_r, np.pi)
@@ -204,9 +215,9 @@ class maPDefenseEnv2(maPDefenseBase):
             # Update beliefs of targets using UKF
             for jj in range(self.nb_targets):
                 # Observe
-                obs = self.observation(self.targets[jj], self.agents[ii])
-                observed.append(obs[0])
-                self.belief_targets[jj].update(obs[0], obs[1], self.agents[ii].state,
+                obs, z_t, spot = self.observation(self.targets[jj], self.agents[ii])
+                observed[jj] = obs
+                self.belief_targets[jj].update(spot, z_t, self.agents[ii].state,    
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
 
@@ -220,14 +231,48 @@ class maPDefenseEnv2(maPDefenseBase):
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
-                                        float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
+                                        float(obs + spot), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
             all_observations = np.logical_or(all_observations, observed)
 
         # Get all rewards after all agents and targets move (t -> t+1)
-        reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, all_observations, self.is_training)
-        reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
+        reward, done, info_dict = self.get_reward(obstacles_pt, all_observations, self.is_training)
+        reward_dict['__all__'], done_dict['__all__'] = reward, done
         return obs_dict, reward_dict, done_dict, info_dict
+
+    def observation(self, target, agent):
+        r, alpha = util.relative_distance_polar(target.state[:2],
+                                            xy_base=agent.state[:2], 
+                                            theta_base=agent.state[2])    
+        # observed is a bool for capturing targets with short range sensor
+        observed = (r <= self.sensor_r) \
+                    & (abs(alpha) <= self.fov/2/180*np.pi) \
+                    & (not(map_utils.is_blocked(self.MAP, agent.state, target.state)))
+        # spotted is a bool for scouting targets with long range sensor
+        spotted = (r <= self.sensor_r_long) \
+                    & (abs(alpha) <= self.fov/2/180*np.pi) \
+                    & (not(map_utils.is_blocked(self.MAP, agent.state, target.state)))
+        z = None
+
+        if spotted:
+            z = np.array([r, alpha])
+            z += self.np_random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+        
+        if observed:
+            z = np.array([r, alpha])
+            # z += np.random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+            z += self.np_random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+        '''For some reason, self.np_random is needed only here instead of np.random in order for the 
+        RNG seed to work, if used in the gen_rand_pose functions RNG seed will NOT work '''
+
+        return observed, z, spotted
+
+    def observation_noise(self, z):
+        # obs_noise_cov = z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+                                        # [0.0, self.sensor_b_sd * self.sensor_b_sd]])
+        obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+                                        [0.0, self.sensor_b_sd * self.sensor_b_sd]])
+        return obs_noise_cov
 
     def reset_target_pose(self, target_id,
                 lin_dist_range_target=(METADATA['target_init_dist_min'], METADATA['target_init_dist_max']),
@@ -252,7 +297,7 @@ class maPDefenseEnv2(maPDefenseBase):
                 ang_dist_range_belief[0], ang_dist_range_belief[1])
 
         self.belief_targets[target_id].reset(
-                    init_state=np.concatenate((init_pose_belief, np.zeros(2))),
+                    init_state=np.concatenate((init_pose_belief,np.zeros(2))),
                     init_cov=self.target_init_cov)
-        t_init = np.concatenate((init_pose_target, [self.target_init_vel[0], 0.0]))
+        t_init = np.concatenate((init_pose_target,[self.target_init_vel[0], 0.0]))
         self.targets[target_id].reset(t_init)

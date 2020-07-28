@@ -27,10 +27,12 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
     if env_name == 'maPDefense-v0':
         from maPDenv.env.maPDefense_v0 import maPDefenseEnv0
         env0 = maPDefenseEnv0(num_agents=num_agents, num_targets=num_targets, **kwargs)
-
     elif env_name == 'maPDefense-v1':
         from maPDenv.env.maPDefense_v1 import maPDefenseEnv1
         env0 = maPDefenseEnv1(num_agents=num_agents, num_targets=num_targets, **kwargs)
+    elif env_name == 'maPDefense-v2':
+        from maPDenv.env.maPDefense_v2 import maPDefenseEnv2
+        env0 = maPDefenseEnv2(num_agents=num_agents, num_targets=num_targets, **kwargs)
     else:
         raise ValueError('No such environment exists.')
 
