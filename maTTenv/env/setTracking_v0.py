@@ -177,7 +177,6 @@ class setTrackingEnv0(maTrackingBase):
                 # Observe
                 obs = self.observation(self.targets[jj], self.agents[ii])
                 observed[jj] = obs
-                # # self.belief_targets[jj].predict() # Belief state at t+1
                 if obs[0]: # if observed, update the target belief.
                     self.belief_targets[jj].update(obs[1], self.agents[ii].state)
 
