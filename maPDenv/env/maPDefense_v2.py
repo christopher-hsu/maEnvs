@@ -191,8 +191,8 @@ class maPDefenseEnv2(maPDefenseBase):
         # Targets move (t -> t+1)
         for n in range(self.nb_targets):
             self.targets[n].update() 
-            self.belief_targets[n].predict(np.array([np.random.random(),
-                                                    np.pi*np.random.random()-0.5*np.pi]))
+            # self.belief_targets[n].predict(np.array([np.random.random(),
+            #                                         np.pi*np.random.random()-0.5*np.pi]))
         # Agents move (t -> t+1) and observe the targets
         for ii, agent_id in enumerate(action_dict):
             obs_dict[self.agents[ii].agent_id] = []
@@ -219,7 +219,11 @@ class maPDefenseEnv2(maPDefenseBase):
                 # Observe
                 obs, z_t, spot = self.observation(self.targets[jj], self.agents[ii])
                 observed[jj] = obs
-                self.belief_targets[jj].update(spot, z_t, self.agents[ii].state,    
+
+                #if spotted than target has also been observed
+                # self.belief_targets[jj].update(spot, z_t, self.agents[ii].state)
+                # if spot:
+                self.belief_targets[jj].update(spot, z_t, self.agents[ii].state,
                                             np.array([np.random.random(),
                                             np.pi*np.random.random()-0.5*np.pi]))
 
