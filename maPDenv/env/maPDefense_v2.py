@@ -149,6 +149,7 @@ class maPDefenseEnv2(maPDefenseBase):
         Agents are given random positions in the map, targets are given random positions near a random agent.
         Return an observation state dict with agent ids (keys) that refer to their observation
         """
+        self.rng = np.random.default_rng()
         # try: 
         #     self.nb_agents = kwargs['nb_agents']
         #     self.nb_targets = kwargs['nb_targets']
@@ -240,6 +241,7 @@ class maPDefenseEnv2(maPDefenseBase):
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
                                         float(obs + spot), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+            self.rng.shuffle(obs_dict[agent_id])
             all_observations = np.logical_or(all_observations, observed)
 
         # Get all rewards after all agents and targets move (t -> t+1)
