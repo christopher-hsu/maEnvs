@@ -113,20 +113,21 @@ class maPDefenseEnv2(maPDefenseBase):
                             self.perimeter_radius, is_training)
 
     def reward_fun(self, observed, goal_origin, goal_radius, 
-                    is_training=True, c_mean=0.001):
+                    is_training=True, c_mean=0.01):
         """ Return a reward for targets that enter the goal radius or observed
         -1 for entering goal radius
         """
         # tracking reward
         detcov = [LA.det(b_target.cov) for b_target in self.belief_targets[:self.nb_targets]]
         r_detcov_mean = -np.mean(np.log(detcov))
-        reward = c_mean * r_detcov_mean
+        # reward = c_mean * r_detcov_mean
+        reward = c_mean * (r_detcov_mean - 10.57)
 
         # perimeter defense reward
         intruder = observed.astype(float)
         target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
-        intruder[global_states[:,0] < goal_radius] = -1
+        intruder[global_states[:,0] < goal_radius] = -5
 
         done = False
 
