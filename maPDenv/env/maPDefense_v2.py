@@ -29,6 +29,7 @@ No obstacles
 Infinite sensing range with scaling noise
 
 maPDefenseEnv2 : SE2 Target model with UKF belief tracker
+    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, intruder, o_d, o_alpha] *nb_targets
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
@@ -59,8 +60,8 @@ class maPDefenseEnv2(maPDefenseBase):
         self.limit['target'] = [np.concatenate((self.MAP.mapmin, [-np.pi, -METADATA['target_vel_limit'], -np.pi])),
                                 np.concatenate((self.MAP.mapmax, [np.pi, METADATA['target_vel_limit'], np.pi]))]
         rel_vel_limit = METADATA['target_vel_limit'] + METADATA['action_v'][0] # Maximum relative speed
-        self.limit['state'] = np.array([[0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0, 0.0, -np.pi ],
-                                        [600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0, self.sensor_r, np.pi]])
+        self.limit['state'] = np.array([[0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0, -10.0, 0.0, -np.pi ],
+                                        [600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0, 0.0, self.sensor_r, np.pi]])
         self.observation_space = spaces.Box(self.limit['state'][0], self.limit['state'][1], dtype=np.float32)
 
         self.target_noise_cov = np.zeros((self.target_dim, self.target_dim))
@@ -127,7 +128,7 @@ class maPDefenseEnv2(maPDefenseBase):
         intruder = observed.astype(float)
         target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
-        intruder[global_states[:,0] < goal_radius] = -5
+        intruder[global_states[:,0] < goal_radius] = -10
 
         done = False
 
@@ -139,7 +140,8 @@ class maPDefenseEnv2(maPDefenseBase):
         intruder[intruder>0] = 0
         tot_intruder = np.sum(intruder)
         reward += tot_intruder
-        info_dict = {'mean_nlogdetcov': r_detcov_mean, 'num_intruders': tot_intruder}
+        info_dict = {'mean_nlogdetcov': r_detcov_mean, 
+                     'num_intruders': tot_intruder, 'intruders': intruder}
 
         return reward, done, info_dict
 
@@ -178,7 +180,7 @@ class maPDefenseEnv2(maPDefenseBase):
                                             theta_base=self.agents[kk].state[2])
                 logdetcov = np.log(LA.det(self.belief_targets[jj].cov))
                 obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 
-                                                           0.0, self.sensor_r, np.pi])
+                                                           0.0, 0.0, self.sensor_r, np.pi])
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
         return obs_dict
@@ -239,14 +241,16 @@ class maPDefenseEnv2(maPDefenseBase):
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
-                                        float(obs + spot), obstacles_pt[0], obstacles_pt[1]])
+                                        float(obs + spot), 0.0, obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
-            self.rng.shuffle(obs_dict[agent_id])
             all_observations = np.logical_or(all_observations, observed)
 
         # Get all rewards after all agents and targets move (t -> t+1)
         reward, done, info_dict = self.get_reward(obstacles_pt, all_observations, self.is_training)
         reward_dict['__all__'], done_dict['__all__'] = reward, done
+        for kk, agent_id in enumerate(obs_dict):
+            obs_dict[agent_id][:,6] = info_dict['intruders']
+            self.rng.shuffle(obs_dict[agent_id])
         return obs_dict, reward_dict, done_dict, info_dict
 
     def observation(self, target, agent):
