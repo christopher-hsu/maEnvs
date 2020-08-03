@@ -60,8 +60,8 @@ class maPDefenseEnv2(maPDefenseBase):
         self.limit['target'] = [np.concatenate((self.MAP.mapmin, [-np.pi, -METADATA['target_vel_limit'], -np.pi])),
                                 np.concatenate((self.MAP.mapmax, [np.pi, METADATA['target_vel_limit'], np.pi]))]
         rel_vel_limit = METADATA['target_vel_limit'] + METADATA['action_v'][0] # Maximum relative speed
-        self.limit['state'] = np.array([[0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0, -10.0, 0.0, -np.pi ],
-                                        [600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0, 0.0, self.sensor_r, np.pi]])
+        self.limit['state'] = np.array([[0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0, 0.0, -1.0, 0.0, -np.pi ],
+                                        [600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 1.0, 1.0, 0.0, self.sensor_r, np.pi]])
         self.observation_space = spaces.Box(self.limit['state'][0], self.limit['state'][1], dtype=np.float32)
 
         self.target_noise_cov = np.zeros((self.target_dim, self.target_dim))
@@ -114,7 +114,7 @@ class maPDefenseEnv2(maPDefenseBase):
                             self.perimeter_radius, is_training)
 
     def reward_fun(self, observed, goal_origin, goal_radius, 
-                    is_training=True, c_mean=0.01):
+                    is_training=True, c_mean=0.001):
         """ Return a reward for targets that enter the goal radius or observed
         -1 for entering goal radius
         """
@@ -128,7 +128,7 @@ class maPDefenseEnv2(maPDefenseBase):
         intruder = observed.astype(float)
         target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
-        intruder[global_states[:,0] < goal_radius] = -10
+        intruder[global_states[:,0] < goal_radius] = -1
 
         done = False
 
@@ -180,7 +180,7 @@ class maPDefenseEnv2(maPDefenseBase):
                                             theta_base=self.agents[kk].state[2])
                 logdetcov = np.log(LA.det(self.belief_targets[jj].cov))
                 obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 
-                                                           0.0, 0.0, self.sensor_r, np.pi])
+                                                           0.0, 0.0, 0.0, self.sensor_r, np.pi])
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
         return obs_dict
@@ -241,7 +241,8 @@ class maPDefenseEnv2(maPDefenseBase):
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
-                                        float(obs + spot), 0.0, obstacles_pt[0], obstacles_pt[1]])
+                                        float(obs), float(spot), 0.0, obstacles_pt[0], obstacles_pt[1]])
+                                        # float(obs + spot), 0.0, obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
             all_observations = np.logical_or(all_observations, observed)
 
@@ -249,8 +250,8 @@ class maPDefenseEnv2(maPDefenseBase):
         reward, done, info_dict = self.get_reward(obstacles_pt, all_observations, self.is_training)
         reward_dict['__all__'], done_dict['__all__'] = reward, done
         for kk, agent_id in enumerate(obs_dict):
-            obs_dict[agent_id][:,6] = info_dict['intruders']
-            self.rng.shuffle(obs_dict[agent_id])
+            obs_dict[agent_id][:,7] = info_dict['intruders']
+            # self.rng.shuffle(obs_dict[agent_id])
         return obs_dict, reward_dict, done_dict, info_dict
 
     def observation(self, target, agent):
