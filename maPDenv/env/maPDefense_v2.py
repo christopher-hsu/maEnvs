@@ -284,8 +284,8 @@ class maPDefenseEnv2(maPDefenseBase):
 
         return observed, z, spotted
 
-    def observation_noise(self, z):
-        obs_noise_cov = z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+    def observation_noise(self, z, c=0.1):
+        obs_noise_cov = c * z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
                                         [0.0, self.sensor_b_sd * self.sensor_b_sd]])
         # obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
                                         # [0.0, self.sensor_b_sd * self.sensor_b_sd]])
