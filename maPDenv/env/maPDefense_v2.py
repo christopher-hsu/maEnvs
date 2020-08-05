@@ -156,10 +156,10 @@ class maPDefenseEnv2(maPDefenseBase):
         Return an observation state dict with agent ids (keys) that refer to their observation
         """
         self.rng = np.random.default_rng()
-        try: 
+        # try: 
             # self.nb_agents = kwargs['nb_agents']
             # self.nb_targets = kwargs['nb_targets']
-        except:
+        # except:
             # self.nb_agents = np.random.random_integers(1, self.num_agents)
             # self.nb_targets = np.random.random_integers(1, self.num_targets)
         obs_dict = {}
