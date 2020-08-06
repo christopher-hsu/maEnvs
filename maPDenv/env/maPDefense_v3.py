@@ -225,7 +225,7 @@ class maPDefenseEnv3(maPDefenseBase):
             observed = np.zeros(self.nb_targets, dtype=bool)
             # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
             # if obstacles_pt is None:
-            # obstacles_pt = (self.sensor_r, np.pi)
+            obstacles_pt = (self.sensor_r, np.pi)
 
             # Update beliefs of targets using UKF
             for jj in range(self.nb_targets):
@@ -249,8 +249,8 @@ class maPDefenseEnv3(maPDefenseBase):
                                         self.agents[ii].state[:2], self.agents[ii].state[-1],
                                         action_vw[0], action_vw[1])
                 r_perim, a_perim = util.relative_distance_polar(self.origin_init_pos[:2],
-                                            xy_base=self.agents[kk].state[:2], 
-                                            theta_base=self.agents[kk].state[2])
+                                            xy_base=self.agents[ii].state[:2], 
+                                            theta_base=self.agents[ii].state[2])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
                                         float(obs), float(spot), 0.0, r_perim, a_perim])
