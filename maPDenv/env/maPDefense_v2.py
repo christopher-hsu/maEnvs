@@ -29,7 +29,7 @@ No obstacles
 Infinite sensing range with scaling noise
 
 maPDefenseEnv2 : SE2 Target model with UKF belief tracker
-    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, intruder, o_d, o_alpha] *nb_targets
+    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, spot, intruder, o_d, o_alpha] *nb_targets
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
@@ -114,7 +114,7 @@ class maPDefenseEnv2(maPDefenseBase):
                             self.perimeter_radius, is_training)
 
     def reward_fun(self, observed, goal_origin, goal_radius, 
-                    is_training=True, c_mean=0.1):
+                    is_training=True, c_mean=0.01):
         """ Return a reward for targets that enter the goal radius or observed
         -1 for entering goal radius
         """
@@ -128,7 +128,7 @@ class maPDefenseEnv2(maPDefenseBase):
         intruder = observed.astype(float)
         target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
-        intruder[global_states[:,0] < goal_radius] = -50
+        intruder[global_states[:,0] < goal_radius] = -100
 
         #if captured or entered goal reset target pose
         for ii, rew in enumerate(intruder):
@@ -138,7 +138,7 @@ class maPDefenseEnv2(maPDefenseBase):
         intruder[intruder>0] = 0
         tot_intruder = np.sum(intruder)
         reward += tot_intruder
-        reward += 0.1 #for ep len
+        reward += 1.0 #for ep len
 
         done = False
         if tot_intruder < 0:
@@ -156,12 +156,12 @@ class maPDefenseEnv2(maPDefenseBase):
         Return an observation state dict with agent ids (keys) that refer to their observation
         """
         self.rng = np.random.default_rng()
-        # try: 
+        try: 
             # self.nb_agents = kwargs['nb_agents']
-            # self.nb_targets = kwargs['nb_targets']
-        # except:
+            self.nb_targets = kwargs['nb_targets']
+        except:
             # self.nb_agents = np.random.random_integers(1, self.num_agents)
-            # self.nb_targets = np.random.random_integers(1, self.num_targets)
+            self.nb_targets = np.random.random_integers(1, self.num_targets)
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
         # Initialize agents
@@ -279,13 +279,13 @@ class maPDefenseEnv2(maPDefenseBase):
         if observed:
             z = np.array([r, alpha])
             # z += np.random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
-            z += self.np_random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
+            # z += self.np_random.multivariate_normal(np.zeros(2,), self.observation_noise(z))
         '''For some reason, self.np_random is needed only here instead of np.random in order for the 
         RNG seed to work, if used in the gen_rand_pose functions RNG seed will NOT work '''
 
         return observed, z, spotted
 
-    def observation_noise(self, z, c=0.1):
+    def observation_noise(self, z, c=1):
         obs_noise_cov = c * z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
                                         [0.0, self.sensor_b_sd * self.sensor_b_sd]])
         # obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
