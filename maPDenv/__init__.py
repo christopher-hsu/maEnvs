@@ -33,6 +33,9 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
     elif env_name == 'maPDefense-v2':
         from maPDenv.env.maPDefense_v2 import maPDefenseEnv2
         env0 = maPDefenseEnv2(num_agents=num_agents, num_targets=num_targets, **kwargs)
+    elif env_name == 'maPDefense-v3':
+        from maPDenv.env.maPDefense_v3 import maPDefenseEnv3
+        env0 = maPDefenseEnv3(num_agents=num_agents, num_targets=num_targets, **kwargs)
     else:
         raise ValueError('No such environment exists.')
 
