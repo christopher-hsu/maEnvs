@@ -114,7 +114,7 @@ class maPDefenseEnv2(maPDefenseBase):
                             self.perimeter_radius, is_training)
 
     def reward_fun(self, observed, goal_origin, goal_radius, 
-                    is_training=True, c_mean=0.001):
+                    is_training=True, c_mean=0.01):
         """ Return a reward for targets that enter the goal radius or observed
         -1 for entering goal radius
         """
@@ -135,10 +135,10 @@ class maPDefenseEnv2(maPDefenseBase):
             if rew != 0:
                 self.reset_target_pose(target_id=ii)
 
-        intruder[intruder>0] = 10
+        intruder[intruder>0] = 0
         tot_intruder = np.sum(intruder)
         reward += tot_intruder
-        reward += 0.5 #for ep len
+        reward += 0.1 #for ep len
 
         done = False
         if tot_intruder < 0:
