@@ -140,7 +140,7 @@ class maPDefenseEnv3(maPDefenseBase):
         intruder[intruder>0] = 0
         tot_intruder = np.sum(intruder)
         reward += tot_intruder
-        reward += 0.1 #for ep len
+        reward += 0.5 #for ep len
 
         done = False
         if tot_intruder < 0:
@@ -293,8 +293,8 @@ class maPDefenseEnv3(maPDefenseBase):
 
         return observed, z, spotted
 
-    def observation_noise(self, z, c=1):
-        obs_noise_cov = c * z[0] * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
+    def observation_noise(self, z, c=0.1):
+        obs_noise_cov = (c * z[0])**2 * np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
                                         [0.0, self.sensor_b_sd * self.sensor_b_sd]])
         # obs_noise_cov = np.array([[self.sensor_r_sd * self.sensor_r_sd, 0.0],
                                         # [0.0, self.sensor_b_sd * self.sensor_b_sd]])
