@@ -22,7 +22,7 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
         'classic_mdp','target_tracking']
     """
     if T_steps is None:
-        T_steps = 200
+        T_steps = 250
 
     if env_name == 'maPDefense-v0':
         from maPDenv.env.maPDefense_v0 import maPDefenseEnv0
