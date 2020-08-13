@@ -276,7 +276,7 @@ class maPDefenseEnv3(maPDefenseBase):
                     & (not(map_utils.is_blocked(self.MAP, agent.state, target.state)))
         # spotted is a bool for scouting targets with long range sensor
         spotted = (r <= self.sensor_r_long) \
-                    & (abs(alpha) <= self.fov/2/180*np.pi) \
+                    & (abs(alpha) <= self.fov_long/2/180*np.pi) \
                     & (not(map_utils.is_blocked(self.MAP, agent.state, target.state)))
         z = None
 

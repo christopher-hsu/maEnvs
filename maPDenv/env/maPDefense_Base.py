@@ -39,6 +39,7 @@ class maPDefenseBase(gym.Env):    #MultiAgentEnv for rllib style env, seeds are 
         self.sensor_r = METADATA['sensor_r']
         self.sensor_r_long = METADATA['sensor_r_long']
         self.fov = METADATA['fov']
+        self.fov_long = METADATA['fov_long']
 
         map_dir_path = '/'.join(map_utils.__file__.split('/')[:-1])
         self.MAP = map_utils.GridMap(

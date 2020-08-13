@@ -98,9 +98,10 @@ METADATA_pd_v1={   #Beliefs are initialized near target
 
 METADATA_pd_v2={   #Beliefs are initialized near target
         'version' : 1,
-        'sensor_r': 15.0,   # sensor range capture
+        'sensor_r': 10.0,   # sensor range capture
         'sensor_r_long': 150.0,   # long range sensor for scouting
-        'fov' : 30,
+        'fov' : 90,
+        'fov_long' : 30,
         'sensor_r_sd': 0.2, # sensor range noise.
         'sensor_b_sd': 0.01, # sensor bearing noise.
         'agent_init_dist_min': 15.0, # the minimum distance btw agent and the origin.
