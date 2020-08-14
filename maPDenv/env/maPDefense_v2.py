@@ -255,7 +255,7 @@ class maPDefenseEnv2(maPDefenseBase):
         reward_dict['__all__'], done_dict['__all__'] = reward, done
         for kk, agent_id in enumerate(obs_dict):
             obs_dict[agent_id][:,7] = info_dict['intruders']
-            # self.rng.shuffle(obs_dict[agent_id])
+            self.rng.shuffle(obs_dict[agent_id])
         return obs_dict, reward_dict, done_dict, info_dict
 
     def observation(self, target, agent):
