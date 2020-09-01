@@ -175,10 +175,10 @@ class setTrackingEnv0(maTrackingBase):
             # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
-                obs = self.observation(self.targets[jj], self.agents[ii])
+                obs, z_t = self.observation(self.targets[jj], self.agents[ii])
                 observed[jj] = obs
-                if obs[0]: # if observed, update the target belief.
-                    self.belief_targets[jj].update(obs[1], self.agents[ii].state)
+                if obs: # if observed, update the target belief.
+                    self.belief_targets[jj].update(z_t, self.agents[ii].state)
 
                 r_b, alpha_b = util.relative_distance_polar(self.belief_targets[jj].state[:2],
                                         xy_base=self.agents[ii].state[:2], 
@@ -190,7 +190,7 @@ class setTrackingEnv0(maTrackingBase):
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
-                                        float(observed[jj]), obstacles_pt[0], obstacles_pt[1]])
+                                        float(obs), obstacles_pt[0], obstacles_pt[1]])
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
             # shuffle obs to promote permutation invariance
             self.rng.shuffle(obs_dict[agent_id])
