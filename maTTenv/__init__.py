@@ -40,6 +40,9 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
     elif env_name == 'setTracking-v1':
         from maTTenv.env.setTracking_v1 import setTrackingEnv1
         env0 = setTrackingEnv1(num_agents=num_agents, num_targets=num_targets, **kwargs)
+    elif env_name == 'setTracking-v0-noShuffle':
+        from maTTenv.env.setTracking_v0_noShuffle import setTrackingEnv0noShuffle
+        env0 = setTrackingEnv0noShuffle(num_agents=num_agents, num_targets=num_targets, **kwargs)
 
     elif env_name == 'advTracking-v0':
         from maTTenv.env.advTracking_v0 import advTrackingEnv0
