@@ -161,6 +161,7 @@ class setTrackingEnv1(maTrackingBase):
         # Targets move (t -> t+1)
         for n in range(self.nb_targets):
             self.targets[n].update() 
+            self.belief_targets[n].predict() # Belief state at t+1
         # Agents move (t -> t+1) and observe the targets
         for ii, agent_id in enumerate(action_dict):
             obs_dict[self.agents[ii].agent_id] = []
@@ -176,33 +177,31 @@ class setTrackingEnv1(maTrackingBase):
                     margin_pos.append(np.array(self.agents[p].state[:2]))
             _ = self.agents[ii].update(action_vw, margin_pos)
             
-            observed = []
+            # Target and map observations
+            observed = np.zeros(self.nb_targets, dtype=bool)
+            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
+            # if obstacles_pt is None:
+            obstacles_pt = (self.sensor_r, np.pi)
+
             # Update beliefs of targets
             for jj in range(self.nb_targets):
                 # Observe
-                obs = self.observation(self.targets[jj], self.agents[ii])
-                observed.append(obs[0])
-                self.belief_targets[jj].predict() # Belief state at t+1
-                if obs[0]: # if observed, update the target belief.
-                    self.belief_targets[jj].update(obs[1], self.agents[ii].state)
+                obs, z_t = self.observation(self.targets[jj], self.agents[ii])
+                observed[jj] = obs
+                if obs: # if observed, update the target belief.
+                    self.belief_targets[jj].update(z_t, self.agents[ii].state)
 
-            # obstacles_pt = map_utils.get_closest_obstacle(self.MAP, self.agents[ii].state)
-
-            # if obstacles_pt is None:
-            obstacles_pt = (self.sensor_r, np.pi)
-            # Calculate beliefs on only assigned targets
-            for kk in range(self.nb_targets):
-                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[kk].state[:2],
+                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[jj].state[:2],
                                         xy_base=self.agents[ii].state[:2], 
                                         theta_base=self.agents[ii].state[-1])
                 r_dot_b, alpha_dot_b = util.relative_velocity_polar(
-                                        self.belief_targets[kk].state[:2],
-                                        self.belief_targets[kk].state[2:],
+                                        self.belief_targets[jj].state[:2],
+                                        self.belief_targets[jj].state[2:],
                                         self.agents[ii].state[:2], self.agents[ii].state[-1],
                                         action_vw[0], action_vw[1])
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
-                                        np.log(LA.det(self.belief_targets[kk].cov)), 
-                                        float(observed[kk]), obstacles_pt[0], obstacles_pt[1]])
+                                        np.log(LA.det(self.belief_targets[jj].cov)), 
+                                        float(obs), obstacles_pt[0], obstacles_pt[1]])
         # Greedily assign agents to closest target in order, all targets assigned if agents > targets
         mask = np.ones(self.nb_targets,bool)
         if self.nb_targets > self.nb_agents:
