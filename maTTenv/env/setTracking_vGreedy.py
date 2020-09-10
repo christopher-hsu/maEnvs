@@ -140,20 +140,8 @@ class setTrackingEnvGreedy(maTrackingBase):
         # Greedily assign agents to closest target
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
-            # close = np.argmin(obs_dict[agent_id][:,0])
-            pdb.set_trace()
-        # mask = np.ones(self.nb_targets,bool)
-        # if self.nb_targets > self.nb_agents:
-        #     oracle=1
-        # else:
-        #     oracle=0
-        # for agent_id in obs_dict:
-        #     obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
-        #     if np.sum(mask) != np.maximum(0,self.nb_targets-self.nb_agents+oracle):
-        #         idx = np.flatnonzero(mask)
-        #         close = idx[np.argmin(obs_dict[agent_id][:,0][mask])]
-        #         obs_dict[agent_id] = obs_dict[agent_id][None,close]
-        #         mask[close] = False
+            close = np.argmin(obs_dict[agent_id][:,0])
+            obs_dict[agent_id] = obs_dict[agent_id][None,close]
         return obs_dict
 
     def step(self, action_dict):
@@ -207,18 +195,10 @@ class setTrackingEnvGreedy(maTrackingBase):
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
                                         float(obs), obstacles_pt[0], obstacles_pt[1]])
         # Greedily assign agents to closest target
-        mask = np.ones(self.nb_targets,bool)
-        if self.nb_targets > self.nb_agents:
-            oracle=1
-        else:
-            oracle=0
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
-            if np.sum(mask) != np.maximum(0,self.nb_targets-self.nb_agents+oracle):
-                idx = np.flatnonzero(mask)
-                close = idx[np.argmin(obs_dict[agent_id][:,0][mask])]
-                obs_dict[agent_id] = obs_dict[agent_id][None,close]
-                mask[close] = False
+            close = np.argmin(obs_dict[agent_id][:,0])
+            obs_dict[agent_id] = obs_dict[agent_id][None,close]
         # Get all rewards after all agents and targets move (t -> t+1)
         reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, observed, self.is_training)
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
