@@ -128,20 +128,23 @@ class maPDefenseEnv2(maPDefenseBase):
         intruder = observed.astype(float)
         target_states = [target.state[:3] for target in self.targets[:self.nb_targets]]
         global_states = util.global_relative_measure(target_states, goal_origin)
-        intruder[global_states[:,0] < goal_radius] = -50
+        intruder[global_states[:,0] < goal_radius] = -1
 
         #if captured or entered goal reset target pose
         for ii, rew in enumerate(intruder):
             if rew != 0:
                 self.reset_target_pose(target_id=ii)
 
-        intruder[intruder>0] = 0
-        tot_intruder = np.sum(intruder)
+        tot_intruder = np.sum(intruder) # +1 for capture
         reward += tot_intruder
-        reward += 0.5 #for ep len
+        # reward += 0.5 #for ep len
+
+        intruder[intruder>0] = 0
+        done_intruder = np.sum(intruder)
 
         done = False
-        if tot_intruder < 0:
+        if done_intruder < 0:
+            reward = -1.0
             done = True
 
         info_dict = {'mean_nlogdetcov': r_detcov_mean, 

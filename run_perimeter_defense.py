@@ -42,6 +42,7 @@ def main():
             action_dict[agent_id] = env.action_space.sample()
 
         obs, rew, done, info = env.step(action_dict)
+        print(rew['__all__'])
         rewards.append(rew['__all__'])
         nlogdetcov.append(info['mean_nlogdetcov'])
         intruders.append(info['num_intruders'])
