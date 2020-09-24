@@ -22,11 +22,14 @@ o_d : linear distance to the closet obstacle point
 o_alpha : angular distance to the closet obstacle point
 
 [Environment Description]
+Use a gru to predict the belief of the target
+The kf is used as a tool for the reward
+
 Varying number of agents, varying number of randomly moving targets
 No obstacles
 
 setTrackingEnv0 : Double Integrator Target model with KF belief tracker
-    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
+    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
             num_agents describes the upperbound on possible number of agents in env
@@ -35,14 +38,14 @@ setTrackingEnv0 : Double Integrator Target model with KF belief tracker
 
 """
 
-class setTrackingEnv0(maTrackingBase):
+class setTrackingEnvGru(maTrackingBase):
 
     def __init__(self, num_agents=1, num_targets=2, map_name='empty', 
                         is_training=True, known_noise=True, **kwargs):
         super().__init__(num_agents=num_agents, num_targets=num_targets,
                         map_name=map_name, is_training=is_training)
 
-        self.id = 'setTracking-v0'
+        self.id = 'setTracking-vGru'
         self.nb_agents = num_agents #only for init, will change with reset()
         self.nb_targets = num_targets #only for init, will change with reset()
         self.agent_dim = 3
@@ -54,8 +57,8 @@ class setTrackingEnv0(maTrackingBase):
         self.limit['target'] = [np.concatenate((self.MAP.mapmin,[-METADATA['target_vel_limit'], -METADATA['target_vel_limit']])),
                                 np.concatenate((self.MAP.mapmax, [METADATA['target_vel_limit'], METADATA['target_vel_limit']]))]
         rel_vel_limit = METADATA['target_vel_limit'] + METADATA['action_v'][0] # Maximum relative speed
-        self.limit['state'] = [np.concatenate(([0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0], [0.0, -np.pi ])),
-                               np.concatenate(([600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0], [self.sensor_r, np.pi]))]
+        self.limit['state'] = [np.array(([0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0])),
+                               np.array(([600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0]))]
         self.observation_space = spaces.Box(self.limit['state'][0], self.limit['state'][1], dtype=np.float32)
         self.targetA = np.concatenate((np.concatenate((np.eye(2), self.sampling_period*np.eye(2)), axis=1), 
                                         [[0,0,1,0],[0,0,0,1]]))
@@ -135,10 +138,10 @@ class setTrackingEnv0(maTrackingBase):
                                             xy_base=self.agents[kk].state[:2], 
                                             theta_base=self.agents[kk].state[2])
                 logdetcov = np.log(LA.det(self.belief_targets[jj].cov))
-                obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 
-                                                           0.0, self.sensor_r, np.pi])
+                obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 0.0])
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+        self._obs_dict = obs_dict
         return obs_dict
 
     def step(self, action_dict):
@@ -180,18 +183,28 @@ class setTrackingEnv0(maTrackingBase):
                 if obs: # if observed, update the target belief.
                     self.belief_targets[jj].update(z_t, self.agents[ii].state)
 
-                r_b, alpha_b = util.relative_distance_polar(self.belief_targets[jj].state[:2],
-                                        xy_base=self.agents[ii].state[:2], 
-                                        theta_base=self.agents[ii].state[-1])
-                r_dot_b, alpha_dot_b = util.relative_velocity_polar(
-                                        self.belief_targets[jj].state[:2],
-                                        self.belief_targets[jj].state[2:],
-                                        self.agents[ii].state[:2], self.agents[ii].state[-1],
-                                        action_vw[0], action_vw[1])
-                obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
-                                        np.log(LA.det(self.belief_targets[jj].cov)), 
-                                        float(obs), obstacles_pt[0], obstacles_pt[1]])
+                    r_b, alpha_b = util.relative_distance_polar(self.targets[jj].state[:2],
+                                            xy_base=self.agents[ii].state[:2], 
+                                            theta_base=self.agents[ii].state[-1])
+                    r_dot_b, alpha_dot_b = util.relative_velocity_polar(
+                                            self.targets[jj].state[:2],
+                                            self.targets[jj].state[2:],
+                                            self.agents[ii].state[:2], self.agents[ii].state[-1],
+                                            action_vw[0], action_vw[1])
+                    obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
+                                            np.log(LA.det(self.belief_targets[jj].cov)), float(obs)])
+                else:
+                    # if no obs, take old obs + kalman like prediction (random noise)
+                    self._obs_dict[agent_id][jj][:2] += self.np_random.multivariate_normal(np.zeros(2,), 
+                                                        self.observation_noise(self._obs_dict[agent_id][jj][:2]))
+                    self._obs_dict[agent_id][jj][2:4] += self.np_random.multivariate_normal(np.zeros(2,), 
+                                                        self.observation_noise(self._obs_dict[agent_id][jj][:2]))
+                    self._obs_dict[agent_id][jj][5] = float(obs)
+                    obs_dict[agent_id].append(self._obs_dict[agent_id][jj])
+
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+            # store obs dict before shuffle
+            self._obs_dict[agent_id] = obs_dict[agent_id]
             # shuffle obs to promote permutation invariance
             self.rng.shuffle(obs_dict[agent_id])
         # Get all rewards after all agents and targets move (t -> t+1)
