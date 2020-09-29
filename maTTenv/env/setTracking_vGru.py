@@ -138,7 +138,7 @@ class setTrackingEnvGru(maTrackingBase):
                                             xy_base=self.agents[kk].state[:2], 
                                             theta_base=self.agents[kk].state[2])
                 logdetcov = np.log(LA.det(self.belief_targets[jj].cov))
-                obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 0.0])
+                obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, 0.0])
         for agent_id in obs_dict:
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
         self._obs_dict = obs_dict
