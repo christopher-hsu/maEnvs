@@ -29,7 +29,7 @@ Varying number of agents, varying number of randomly moving targets
 No obstacles
 
 setTrackingEnv0 : Double Integrator Target model with KF belief tracker
-    obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed] *nb_targets
+    obs state: [d, alpha, ddot, alphadot, observed] *nb_targets
             where nb_targets and nb_agents vary between a range
             num_targets describes the upperbound on possible number of targets in env
             num_agents describes the upperbound on possible number of agents in env
@@ -57,8 +57,8 @@ class setTrackingEnvGru(maTrackingBase):
         self.limit['target'] = [np.concatenate((self.MAP.mapmin,[-METADATA['target_vel_limit'], -METADATA['target_vel_limit']])),
                                 np.concatenate((self.MAP.mapmax, [METADATA['target_vel_limit'], METADATA['target_vel_limit']]))]
         rel_vel_limit = METADATA['target_vel_limit'] + METADATA['action_v'][0] # Maximum relative speed
-        self.limit['state'] = [np.array(([0.0, -np.pi, -rel_vel_limit, -10*np.pi, -50.0, 0.0])),
-                               np.array(([600.0, np.pi, rel_vel_limit, 10*np.pi,  50.0, 2.0]))]
+        self.limit['state'] = [np.array(([0.0, -np.pi, -rel_vel_limit, -10*np.pi, 0.0])),
+                               np.array(([600.0, np.pi, rel_vel_limit, 10*np.pi, 2.0]))]
         self.observation_space = spaces.Box(self.limit['state'][0], self.limit['state'][1], dtype=np.float32)
         self.targetA = np.concatenate((np.concatenate((np.eye(2), self.sampling_period*np.eye(2)), axis=1), 
                                         [[0,0,1,0],[0,0,0,1]]))
@@ -191,16 +191,16 @@ class setTrackingEnvGru(maTrackingBase):
                                             self.targets[jj].state[2:],
                                             self.agents[ii].state[:2], self.agents[ii].state[-1],
                                             action_vw[0], action_vw[1])
-                    obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
-                                            np.log(LA.det(self.belief_targets[jj].cov)), float(obs)])
+                    obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b, float(obs)])
                 else:
                     # if no obs, take old obs + kalman like prediction (random noise)
-                    self._obs_dict[agent_id][jj][:2] += self.np_random.multivariate_normal(np.zeros(2,), 
-                                                        self.observation_noise(self._obs_dict[agent_id][jj][:2]))
-                    self._obs_dict[agent_id][jj][2:4] += self.np_random.multivariate_normal(np.zeros(2,), 
-                                                        self.observation_noise(self._obs_dict[agent_id][jj][:2]))
-                    self._obs_dict[agent_id][jj][5] = float(obs)
-                    obs_dict[agent_id].append(self._obs_dict[agent_id][jj])
+                    # self._obs_dict[agent_id][jj][:2] += self.np_random.multivariate_normal(np.zeros(2,), 
+                    #                                     self.observation_noise(self._obs_dict[agent_id][jj][:2]))
+                    # self._obs_dict[agent_id][jj][2:4] += self.np_random.multivariate_normal(np.zeros(2,), 
+                    #                                     self.observation_noise(self._obs_dict[agent_id][jj][:2]))
+                    # self._obs_dict[agent_id][jj][4] = float(obs)
+                    # obs_dict[agent_id].append(self._obs_dict[agent_id][jj])
+                    obs_dict[agent_id].append([0.0, 0.0, 0.0, 0.0, float(obs)])
 
             obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
             # store obs dict before shuffle
