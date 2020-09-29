@@ -105,7 +105,7 @@ METADATA_pd_v2={   #Beliefs are initialized near target
         'sensor_r_sd': 0.2, # sensor range noise.
         'sensor_b_sd': 0.01, # sensor bearing noise.
         'agent_init_dist_min': 15.0, # the minimum distance btw agent and the origin.
-        'agent_init_dist_max': 30.0, # the maximum distance btw agent and the origin.
+        'agent_init_dist_max': 50.0, # the maximum distance btw agent and the origin.
         'target_init_cov': 30.0, # initial target diagonal Covariance.
         'target_init_vel': [0.0, 0.0], # target's initial velocity.
         'target_vel_limit': 0.5, # velocity limit of targets.
@@ -116,11 +116,11 @@ METADATA_pd_v2={   #Beliefs are initialized near target
         'margin': 1.0, # a marginal distance btw targets and the agent.
         'margin2wall': 0.5, # a marginal distance from a wall.
         'action_v': [2, 1.33, 0.67, 0], # action primitives - linear velocities.
-        'action_w': [np.pi/8, 0, -np.pi/8], # action primitives - angular velocities.
+        'action_w': [np.pi/4, 0, -np.pi/4], # action primitives - angular velocities.
         'const_q': 0.001, # target noise constant in beliefs.
         'const_q_true': 0.01, # target noise constant of actual targets.
-        'spiral_min': 0.0001, # minimum factor of target spiral
-        'spiral_max': 0.005,  # maximum factor of target spiral
+        'spiral_min': 0.005, # minimum factor of target spiral
+        'spiral_max': 0.001,  # maximum factor of target spiral
         'perimeter_radius': 10.0 # radius of the perimeter to defend
     }
 
