@@ -46,6 +46,9 @@ def make(env_name, render=False, figID=0, record=False, ros=False, directory='',
     elif env_name == 'setTracking-vGreedy':
         from maTTenv.env.setTracking_vGreedy import setTrackingEnvGreedy
         env0 = setTrackingEnvGreedy(num_agents=num_agents, num_targets=num_targets, **kwargs)
+    elif env_name == 'setTracking-veryGreedy':
+        from maTTenv.env.setTracking_veryGreedy import setTrackingEnvVeryGreedy
+        env0 = setTrackingEnvVeryGreedy(num_agents=num_agents, num_targets=num_targets, **kwargs)
     elif env_name == 'setTracking-vGru':
         from maTTenv.env.setTracking_vGru import setTrackingEnvGru
         env0 = setTrackingEnvGru(num_agents=num_agents, num_targets=num_targets, **kwargs)
