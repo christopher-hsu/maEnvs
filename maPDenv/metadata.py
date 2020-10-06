@@ -115,7 +115,7 @@ METADATA_pd_v2={   #Beliefs are initialized near target
         'init_belief_distance_max': 5.0, # the maximum distance btw belief and the target.
         'margin': 1.0, # a marginal distance btw targets and the agent.
         'margin2wall': 0.5, # a marginal distance from a wall.
-        'action_v': [2, 1.33, 0.67, 0], # action primitives - linear velocities.
+        'action_v': [3, 2, 1, 0], # action primitives - linear velocities.
         'action_w': [np.pi/4, 0, -np.pi/4], # action primitives - angular velocities.
         'const_q': 0.001, # target noise constant in beliefs.
         'const_q_true': 0.01, # target noise constant of actual targets.
