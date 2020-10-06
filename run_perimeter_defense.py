@@ -31,10 +31,11 @@ def main():
     intruders = []
     action_dict = {}
     done = {'__all__':False}
-
+    step = 0
     obs = env.reset()
     # See below why this check is needed for training or eval loop
     while not done['__all__']:
+        step += 1
         if args.render:
             env.render()
 
@@ -47,7 +48,7 @@ def main():
         nlogdetcov.append(info['mean_nlogdetcov'])
         intruders.append(info['num_intruders'])
 
-    print("Total episode reward : %.2f,  Sum of neg logdet of the target belief covs : %.2f,  Total num of intruders : %d"%(np.sum(rewards),np.sum(nlogdetcov),np.sum(intruders)))
+    print("Total episode reward : %.2f,  Sum of neg logdet of the target belief covs : %.2f,  Total num of intruders : %d,  Ep_len : %d"%(np.sum(rewards),np.sum(nlogdetcov),np.sum(intruders), step))
 
 if __name__ == "__main__":
     main()

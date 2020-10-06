@@ -120,7 +120,7 @@ METADATA_pd_v2={   #Beliefs are initialized near target
         'const_q': 0.001, # target noise constant in beliefs.
         'const_q_true': 0.01, # target noise constant of actual targets.
         'spiral_min': 0.005, # minimum factor of target spiral
-        'spiral_max': 0.001,  # maximum factor of target spiral
+        'spiral_max': 0.005,  # maximum factor of target spiral
         'perimeter_radius': 10.0 # radius of the perimeter to defend
     }
 
