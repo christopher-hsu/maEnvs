@@ -140,15 +140,15 @@ class maPDefenseEnv2(maPDefenseBase):
         # reward += 0.5 #for ep len
 
         intruder[intruder>0] = 0
-        done_intruder = np.sum(intruder)
+        done_intruder = -np.sum(intruder)
 
         done = False
-        if done_intruder < 0:
+        if done_intruder > 0:
             reward = -1.0
-            done = True
+            # done = True
 
         info_dict = {'mean_nlogdetcov': r_detcov_mean, 
-                     'num_intruders': tot_intruder, 'intruders': intruder}
+                     'num_intruders': tot_intruder, 'intruders': done_intruder}
 
         return reward, done, info_dict
 
