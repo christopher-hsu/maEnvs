@@ -145,7 +145,7 @@ class maPDefenseEnv2(maPDefenseBase):
         done = False
         if done_intruder > 0:
             reward = -1.0
-            # done = True
+            done = True
 
         info_dict = {'mean_nlogdetcov': r_detcov_mean, 
                      'num_intruders': tot_intruder, 'intruders': done_intruder}
