@@ -24,7 +24,7 @@ o_alpha : angular distance to the closet obstacle point
 [Environment Description]
 Varying number of agents, varying number of randomly moving targets
 No obstacles
-VERY Greedy target assignment, always goes to the closest target
+VERY Greedy target assignment, always goes to the closest target that was assigned at reset
 
 setTrackingEnv1 : Double Integrator Target model with KF belief tracker
     obs state: [d, alpha, ddot, alphadot, logdet(Sigma), observed, o_d, o_alpha] *nb_targets
