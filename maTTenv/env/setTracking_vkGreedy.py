@@ -141,6 +141,7 @@ class setTrackingEnvkGreedy(maTrackingBase):
         # Assign agents to closest k targets, if less targets than k, consider all targets
         self.k = 4
         if self.nb_targets > self.k:
+            self.nb_targets = self.k    ##needed for replay buffer storage
             for agent_id in obs_dict:
                 obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
                 close = np.argpartition(obs_dict[agent_id][:,0], self.k)
