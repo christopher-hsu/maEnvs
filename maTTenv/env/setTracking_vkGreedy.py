@@ -115,9 +115,6 @@ class setTrackingEnvkGreedy(maTrackingBase):
         except:
             self.nb_agents = np.random.random_integers(1, self.num_agents)
             self.nb_targets = np.random.random_integers(1, self.num_targets)
-        self.k = 4
-        if self.nb_targets < self.k:
-            self.k = self.nb_targets
         obs_dict = {}
         init_pose = self.get_init_pose(**kwargs)
         # Initialize agents
@@ -140,11 +137,18 @@ class setTrackingEnvkGreedy(maTrackingBase):
                 logdetcov = np.log(LA.det(self.belief_targets[jj].cov))
                 obs_dict[self.agents[kk].agent_id].append([r, alpha, 0.0, 0.0, logdetcov, 
                                                            0.0, self.sensor_r, np.pi])
-        # Assign agents to closest k targets
-        for agent_id in obs_dict:
-            obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
-            close = np.argpartition(obs_dict[agent_id][:,0], self.k)
-            obs_dict[agent_id] = obs_dict[agent_id][close[:self.k]]
+
+        # Assign agents to closest k targets, if less targets than k, consider all targets
+        self.k = 4
+        if self.nb_targets > self.k:
+            for agent_id in obs_dict:
+                obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+                close = np.argpartition(obs_dict[agent_id][:,0], self.k)
+                obs_dict[agent_id] = obs_dict[agent_id][close[:self.k]]
+        else:
+            for agent_id in obs_dict:
+                obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+
         return obs_dict
 
     def step(self, action_dict):
@@ -197,11 +201,15 @@ class setTrackingEnvkGreedy(maTrackingBase):
                 obs_dict[agent_id].append([r_b, alpha_b, r_dot_b, alpha_dot_b,
                                         np.log(LA.det(self.belief_targets[jj].cov)), 
                                         float(obs), obstacles_pt[0], obstacles_pt[1]])
-        # Assign agents to closest k targets
-        for agent_id in obs_dict:
-            obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
-            close = np.argpartition(obs_dict[agent_id][:,0], self.k)
-            obs_dict[agent_id] = obs_dict[agent_id][close[:self.k]]
+        # Assign agents to closest k targets, if less targets than k, consider all targets
+        if self.nb_targets > self.k:
+            for agent_id in obs_dict:
+                obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
+                close = np.argpartition(obs_dict[agent_id][:,0], self.k)
+                obs_dict[agent_id] = obs_dict[agent_id][close[:self.k]]
+        else:
+            for agent_id in obs_dict:
+                obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
         # Get all rewards after all agents and targets move (t -> t+1)
         reward, done, mean_nlogdetcov = self.get_reward(obstacles_pt, observed, self.is_training)
         reward_dict['__all__'], done_dict['__all__'], info_dict['mean_nlogdetcov'] = reward, done, mean_nlogdetcov
