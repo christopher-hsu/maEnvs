@@ -139,7 +139,7 @@ class setTrackingEnvkGreedy(maTrackingBase):
                                                            0.0, self.sensor_r, np.pi])
 
         # Assign agents to closest k targets, if less targets than k, consider all targets
-        self.k = 4
+        self.k = 8
         if self.nb_targets > self.k:
             for agent_id in obs_dict:
                 obs_dict[agent_id] = np.asarray(obs_dict[agent_id])
